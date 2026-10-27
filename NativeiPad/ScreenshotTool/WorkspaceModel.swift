@@ -12,7 +12,7 @@ import PencilKit
     @Published var busy = false
     @Published var dirty = false
     @Published var connected = false
-    @Published var status = "Connect to Screenshot Tool on your Mac."
+    @Published var status = "Connect to Fatty Lumpkin on your Mac."
     @Published var error: String?
     @Published var fingerDrawing = false
     @Published var showPairing = false
@@ -99,7 +99,7 @@ import PencilKit
             }
         } catch {
             connected = false
-            status = current == nil ? "Mac unavailable. Keep Screenshot Tool open on the same network." : "Connection interrupted. Your drawing is kept on this iPad."
+            status = current == nil ? "Mac unavailable. Keep Fatty Lumpkin open on the same network." : "Connection interrupted. Your drawing is kept on this iPad."
         }
     }
     func open(_ capture: Capture, manual: Bool = true) async {
@@ -182,7 +182,7 @@ import PencilKit
     func friendly(_ error: Error) -> String {
         if let url = error as? URLError {
             switch url.code {
-            case .timedOut: return "The Mac took too long to respond. Keep Screenshot Tool open and try again. Your drawing is kept here."
+            case .timedOut: return "The Mac took too long to respond. Keep Fatty Lumpkin open and try again. Your drawing is kept here."
             case .notConnectedToInternet, .cannotConnectToHost, .cannotFindHost, .networkConnectionLost:
                 return "Could not reach your Mac. Keep both devices on the same local network and allow Local Network access for this app in Settings."
             default: return "Connection failed. Check the Mac app and your local network, then try again."

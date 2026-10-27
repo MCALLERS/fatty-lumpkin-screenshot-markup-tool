@@ -57,8 +57,8 @@ struct WorkspaceView: View {
                     VStack(spacing: 20) {
                         Image("Pony").resizable().scaledToFit().frame(maxWidth: 220, maxHeight: 220).clipShape(RoundedRectangle(cornerRadius: 24)).accessibilityHidden(true)
                         Text(model.connection == nil ? "Your iPad is the drawing surface." : "Ready for your next screenshot.").font(.system(size: 30, weight: .semibold)).multilineTextAlignment(.center)
-                        Text(model.connection == nil ? "Connect to Fatty Lumpkin Markup on your Mac to start." : "On your Mac, press ⇧⌘4.\nYour captures appear here, ready for Pencil.").foregroundStyle(.secondary).multilineTextAlignment(.center)
-                        if model.connection == nil { Button("Connect your Mac") { model.showPairing = true }.buttonStyle(.borderedProminent).tint(ink) }
+                        Text(model.connection == nil ? "Connect to Fatty Lumpkin on your Mac to start." : "On your Mac, press ⇧⌘4.\nYour captures appear here, ready for Pencil.").foregroundStyle(.secondary).multilineTextAlignment(.center)
+                        if model.connection == nil { Button("Connect your Mac") { model.showPairing = true }.buttonStyle(.borderedProminent).tint(ink).foregroundStyle(.white) }
                         if let complete = model.completedMessage {
                             Label(complete, systemImage: "checkmark.circle.fill").font(.callout).foregroundStyle(Color(red: 0.15, green: 0.32, blue: 0.17)).padding(24).background(lime.opacity(0.25), in: RoundedRectangle(cornerRadius: 18)).frame(maxWidth: 540)
                         }
@@ -67,12 +67,12 @@ struct WorkspaceView: View {
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
             VStack(alignment: .leading, spacing: 8) {
                 HStack { Text(model.status).accessibilityIdentifier("status"); Spacer(); if let current = model.current { Text("\(current.width) × \(current.height)").monospacedDigit() }; Text("Beta 0.4.0") }
-                Text("On your Mac: ⌃⌥⌘S opens finished screenshots · Keep Fatty Lumpkin Markup running.")
-                    .accessibilityLabel("On your Mac: Control Option Command S opens finished screenshots. Keep Fatty Lumpkin Markup running.")
+                Text("On your Mac: ⌃⌥⌘S opens finished screenshots · Keep Fatty Lumpkin running.")
+                    .accessibilityLabel("On your Mac: Control Option Command S opens finished screenshots. Keep Fatty Lumpkin running.")
             }.font(.caption).foregroundStyle(.secondary).padding(14).frame(maxWidth: .infinity, alignment: .leading).background(.white)
         }.foregroundStyle(ink).preferredColorScheme(.light)
             .sheet(isPresented: $model.showPairing) { PairingView(model: model) }
-            .alert("Fatty Lumpkin Markup", isPresented: Binding(get: { model.error != nil && !model.showPairing }, set: { if !$0 { model.error = nil } })) { Button("OK") { model.error = nil } } message: { Text(model.error ?? "") }
+            .alert("Fatty Lumpkin", isPresented: Binding(get: { model.error != nil && !model.showPairing }, set: { if !$0 { model.error = nil } })) { Button("OK") { model.error = nil } } message: { Text(model.error ?? "") }
     }
 }
 struct PairingView: View {
@@ -85,8 +85,8 @@ struct PairingView: View {
             VStack(spacing: 24) {
                 Image(systemName: "ipad.and.arrow.forward").font(.system(size: 56, weight: .light)).foregroundStyle(ink)
                 Text("Connect your Mac.").font(.largeTitle.bold())
-                Text("On your Mac, open Fatty Lumpkin Markup and click Connect iPad. Scan that QR code here.").multilineTextAlignment(.center).foregroundStyle(.secondary).frame(maxWidth: 420)
-                Button { Task { await camera() } } label: { Label("Scan Mac QR code", systemImage: "qrcode.viewfinder").frame(maxWidth: 320).padding(10) }.buttonStyle(.borderedProminent).tint(ink).disabled(model.busy)
+                Text("On your Mac, open Fatty Lumpkin and click Connect iPad. Scan that QR code here.").multilineTextAlignment(.center).foregroundStyle(.secondary).frame(maxWidth: 420)
+                Button { Task { await camera() } } label: { Label("Scan Mac QR code", systemImage: "qrcode.viewfinder").frame(maxWidth: 320).padding(10) }.buttonStyle(.borderedProminent).tint(ink).foregroundStyle(.white).disabled(model.busy)
                 HStack { Text("Or").foregroundStyle(.secondary); PasteButton(payloadType: String.self) { strings in if let first = strings.first { Task { await model.pair(first) } } }.labelStyle(.titleOnly) }.disabled(model.busy)
                 Text("Paste accepts the complete pairing link from the Mac QR code. Your Safari bookmark alone does not contain the pairing key.").font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center).frame(maxWidth: 420)
                 if model.busy { ProgressView("Connecting…") }

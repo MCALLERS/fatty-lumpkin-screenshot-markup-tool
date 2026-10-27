@@ -38,7 +38,7 @@ final class ScannerController: UIViewController, DataScannerViewControllerDelega
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated); delivered = false
         guard let scanner, DataScannerViewController.isAvailable else {
-            report("Apple’s QR scanner is unavailable. Check Camera access for Screenshot Tool in iPad Settings. You can also scan with the iPad Camera app, copy the QR link, and use Paste here."); return
+            report("Apple’s QR scanner is unavailable. Check Camera access for Fatty Lumpkin Screenshot Tool in iPad Settings. You can also scan with the iPad Camera app, copy the QR link, and use Paste here."); return
         }
         do { try scanner.startScanning() }
         catch { report("The camera could not start: " + error.localizedDescription) }

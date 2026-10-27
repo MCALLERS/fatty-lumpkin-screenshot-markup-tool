@@ -33,7 +33,7 @@ struct Connection: Codable, Equatable {
               let fragment = parts.fragment,
               let token = URLComponents(string: "?" + fragment)?.queryItems?.first(where: { $0.name == "pair" })?.value,
               (16...128).contains(token.count), token.allSatisfy({ $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-" || $0 == "_") })
-        else { throw AppError.message("Scan the Connect iPad QR code in Screenshot Tool on your Mac.") }
+        else { throw AppError.message("Scan the Connect iPad QR code in Fatty Lumpkin on your Mac.") }
         var base = URLComponents(); base.scheme = "http"; base.host = host; base.port = port
         guard let url = base.url else { throw AppError.message("The Mac address is invalid.") }
         return Connection(baseURL: url, token: token)
