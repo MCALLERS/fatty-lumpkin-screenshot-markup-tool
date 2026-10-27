@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Fatty Lumpkin Markup">
+  <meta name="theme-color" content="#142c36">
+  <title>Fatty Lumpkin Markup</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+<header>
+  <div class="brand"><img class="brand-icon" src="/pony.png" alt=""><div><strong>Fatty Lumpkin Markup</strong><span id="connection">Connecting to your Mac…</span></div></div>
+  <button id="done" class="primary" disabled>Done <span aria-hidden="true">↗</span></button>
+</header>
+<section class="bar" aria-label="Drawing tools">
+  <div class="group tools">
+    <button data-tool="pen" class="chosen" aria-pressed="true">Pen</button>
+    <button data-tool="highlight" aria-pressed="false">Highlight</button>
+    <button data-tool="erase" aria-pressed="false">Eraser</button>
+  </div>
+  <div class="group colors" aria-label="Ink color">
+    <button data-color="#ed4359" class="red chosen" aria-label="Red ink" aria-pressed="true"></button>
+    <button data-color="#132b36" class="black" aria-label="Black ink" aria-pressed="false"></button>
+    <button data-color="#12815c" class="green" aria-label="Green ink" aria-pressed="false"></button>
+    <button data-color="#3867df" class="blue" aria-label="Blue ink" aria-pressed="false"></button>
+  </div>
+  <label class="weight">Width<select id="width" aria-label="Pen width"><option value="2">Fine</option><option value="5" selected>Medium</option><option value="9">Bold</option></select></label>
+  <div class="group history"><button id="undo" disabled aria-label="Undo last stroke">↶</button><button id="redo" disabled aria-label="Redo last stroke">↷</button></div>
+  <label class="finger"><input type="checkbox" id="finger"> Draw with finger</label>
+</section>
+<section class="capture-bar">
+  <strong id="queue-position" aria-live="polite">No pending screenshots</strong>
+  <select id="captures" aria-label="Choose screenshot"><option>No screenshots yet</option></select>
+  <button id="new-capture" hidden>Resume queue</button>
+  <div class="zoom"><button id="zoom-out" aria-label="Zoom out">−</button><button id="fit">Fit</button><button id="zoom-in" aria-label="Zoom in">+</button></div>
+</section>
+<main id="workspace">
+  <div id="empty"><img class="empty-icon" src="/pony.png" alt="A shaggy pony carrying a red pencil"><h1>Ready for your next screenshot.</h1><p>On your Mac, press <strong>Shift–Command–4</strong>.<br>It will appear here, ready for your Pencil.</p>
+    <section id="complete" class="completion-note" aria-live="polite" hidden><div class="eyebrow">SAVED ON YOUR MAC</div><h2 id="complete-title">Ready to paste.</h2><p id="complete-detail">Go to your agent on the Mac and press ⌘V.</p></section>
+  </div>
+  <div id="paper" hidden><img id="original" alt="Screenshot to annotate" draggable="false"><canvas id="ink" aria-label="Draw annotations on the screenshot"></canvas></div>
+</main>
+<footer><span id="status" role="status" aria-live="polite">Use Pencil to draw. Use a finger to move around.</span><span id="dimensions"></span><small>v0.4.0</small></footer>
+<section id="pairing" class="overlay" hidden>
+  <div class="card"><div class="eyebrow">ONE-TIME SETUP</div><h1>Connect to your Mac.</h1><p>Open Fatty Lumpkin Markup on your Mac and choose <strong>Connect iPad</strong>. Scan its QR code with the iPad camera.</p><p class="muted">Keep both devices on the same local network. Your screenshots stay on your Mac and iPad.</p><button id="try-again">Check connection</button></div>
+</section>
+</body></html>
