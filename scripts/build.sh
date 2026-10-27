@@ -2,6 +2,8 @@
 set -euo pipefail
 project_dir="$(cd "$(dirname "$0")/.." && pwd)"
 app_dir="$project_dir/build/Fatty Lumpkin Screenshot Markup Tool.app"
+# This is generated output: do not retain a frozen helper from an older build.
+if [[ -d "$app_dir" ]]; then rm -rf "$app_dir"; fi
 mkdir -p "$app_dir/Contents/MacOS" "$app_dir/Contents/Resources/Companion"
 for resource in server.py index.html app.js style.css; do
   cp "$project_dir/Companion/$resource" "$app_dir/Contents/Resources/Companion/"
