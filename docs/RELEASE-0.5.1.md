@@ -38,3 +38,11 @@ The public Mac download was freshly downloaded and verified against SHA-256 `563
 - **0.5.1 (15)** is the current native iPad repository source and locally installed development build. It adds that artwork, quotes, and safe Clear queue shortcut. Its 21 behavioral native tests passed; it has not been uploaded or submitted to Apple. See [local build 15 notes](../NativeiPad/LOCAL-BUILD-15.md).
 
 The Mac build script and signed 0.5.1 artifact remain build **14**. The native project generator now produces build **15**, so this repository snapshot is not a reproduction of the submitted iPad build 14. Mac publishing and website deployment do not change TestFlight availability.
+
+## Publication verification — 28 October 2026
+
+The public repository is now [MCALLERS/ludwigs-annotated-screenshots](https://github.com/MCALLERS/ludwigs-annotated-screenshots). Its identity, history, release tag, and release assets were preserved. The old repository and release-page URLs redirect to the new name; the old direct DMG URL returns a redirect to the new asset URL. A fresh download through the new URL has the same verified SHA-256 as the fully tested package.
+
+Cloudflare's automatic build for website commit `5b05664` succeeded after the repository rename. The public landing page and privacy route use the renamed GitHub links. All 33 non-robots static files matched their reviewed local bytes; Cloudflare's managed `robots.txt` adds its own crawler directives and retains the project's original rules and sitemap. Browser inspection confirmed the download/setup panel, enabled character animation, film playback, and sound controls without page-script errors.
+
+Colleagues can start at **https://screenshot.bombadillo-ai.com/** to download Mac 0.5.1 and pair with Safari immediately, or use the separately approved native TestFlight build. No new iPad build was uploaded during this publication.
