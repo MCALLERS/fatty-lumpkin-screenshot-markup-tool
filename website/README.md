@@ -10,7 +10,7 @@ From this directory, run `python3 -m http.server 8094 --directory public`, then 
 
 The site is live at https://screenshot.bombadillo-ai.com through Cloudflare Workers static assets. `wrangler.jsonc` binds the custom domain.
 
-Cloudflare Builds is configured for this repository's `main` branch, with root directory `website`, no build command, and deploy command `npx wrangler@4.141.0 deploy`. Only changes matching `website/**` trigger a build; preview builds are disabled. The initial Git-triggered deployment is being verified.
+Cloudflare Builds is configured for this repository's `main` branch, with root directory `website`, no build command, and deploy command `npx wrangler@4.141.0 deploy`. Only changes matching `website/**` trigger a build; preview builds are disabled. GitHub installation access to this repository is confirmed. The initial Git-triggered deployment is being verified.
 
 For a manual deployment, run `npx wrangler@4.141.0 deploy` from this directory with the intended Cloudflare account authenticated.
 
