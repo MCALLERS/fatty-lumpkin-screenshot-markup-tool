@@ -2,7 +2,7 @@
 
 Fatty Lumpkin is now **Ludwig's Annotated Screenshots**. The Mac app, native iPad app, Safari companion, menus, pairing instructions, and icons use the new name and the approved screenshot-and-pencil mark.
 
-The Mac release is prepared for GitHub tag **`v0.5.1-beta.1`**, with asset **`Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`**. The latest [website](https://screenshot.bombadillo-ai.com) is the intended front door for this download. Publication and fresh public-download verification are still pending.
+The Mac release is published at [GitHub tag **`v0.5.1-beta.1`**](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.1-beta.1), with asset **`Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`**. A fresh public download has been fully verified. The [website](https://screenshot.bombadillo-ai.com) is the front door configured for Mac 0.5.1; verification of its latest deployment remains separate and pending.
 
 This is a branding release. The Mac and iPad bundle identifiers, screenshot library, app state, Keychain pairing service, drafts, and transfer protocol remain unchanged. The internal Mac helper executable retains its original name, and `/pony.png` remains an alias for the new mark so cached companion pages continue to load it.
 
@@ -29,7 +29,7 @@ The Mac app and DMG are Developer ID signed, accepted by Apple notarization, and
 
 App Store Connect now shows **Ludwig's Annotated Screenshots** on the existing app record. The verified DMG app was installed at `~/Applications/Ludwig's Annotated Screenshots.app` after the old app and helper were confirmed stopped. The installed copy passed deep signature verification, stapler validation, Gatekeeper assessment, and its self-test. It was launched, and its native window, menu, and workflow instructions visibly show the new name. The previous 0.5.0 app is retained at `work/Screenshot-Tool-0.5.0-before-Ludwig.app`. Screenshot folders and pairing state were not moved.
 
-The Mac download and updated website are **ready to publish**; this note does not yet claim a completed GitHub release, deployment, or fresh public-download verification.
+The public Mac download was freshly downloaded and verified against SHA-256 `563cc48d601775babfc11b72369c11d05a701e6d24d2114256171beb9d22a901`. Both the downloaded DMG and its app passed signature and stapled-ticket verification, and Gatekeeper accepted them. The downloaded app passed `--self-test`; its packaged companion passed the protocol tests in an isolated workspace. These checks confirm the published artifact, independently of local build and installation checks. The latest website deployment has not yet been verified.
 
 ## iPad distribution and source boundary
 

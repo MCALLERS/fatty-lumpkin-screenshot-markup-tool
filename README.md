@@ -14,12 +14,12 @@ Start at the [website](https://screenshot.bombadillo-ai.com) for the workflow, M
 
 | Component | Current status |
 | --- | --- |
-| Mac 0.5.1 (14) | Renamed, signed, notarized, and ready to publish as `v0.5.1-beta.1`; public download and website update verification pending. |
+| Mac 0.5.1 (14) | Published as [`v0.5.1-beta.1`](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.1-beta.1); freshly downloaded package verified. |
 | Native iPad 0.4.0 (11) | Approved public TestFlight build, still showing the earlier Fatty Lumpkin branding. |
 | Native iPad 0.5.1 (14) | Renamed build assigned to Public Beta; **Waiting for Review**. |
 | Native iPad 0.5.1 (15) | Current repository source and local device build, including Ludwig artwork, quotes, and Clear queue; not uploaded to TestFlight. |
 
-The prepared Mac asset is `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`. Until its publication is verified, the earlier Mac 0.5.0 release remains the public download. See [sharing the beta](docs/SHARING-BETA.md) and the [upgrade note](docs/GETTING-STARTED.md#updating-from-fatty-lumpkin).
+The public Mac asset is `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`. The website is the front door configured for Mac 0.5.1; verification of its latest deployment is separate from the verified GitHub download. See [sharing the beta](docs/SHARING-BETA.md) and the [upgrade note](docs/GETTING-STARTED.md#updating-from-fatty-lumpkin).
 
 ## The everyday loop
 

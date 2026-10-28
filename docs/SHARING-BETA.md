@@ -2,15 +2,15 @@
 
 Start at [Ludwig's Annotated Screenshots](https://screenshot.bombadillo-ai.com). Use that website as the front door for the workflow, Mac download, and iPad invitation.
 
-**Publication status — 28 October 2026:** the renamed Mac **0.5.1 (14)** package is signed, notarized, verified, and ready to publish as `v0.5.1-beta.1`. Publication of that download and the updated website is still pending verification. Until then, the existing Mac 0.5.0 release remains available. Apple is separately reviewing iPad build 14.
+**Publication status — 28 October 2026:** the renamed Mac **0.5.1 (14)** package is published as [`v0.5.1-beta.1`](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.1-beta.1). A fresh public download passed checksum, signature, notarization-ticket, Gatekeeper, and packaged-runtime verification. The website is the front door configured for Mac 0.5.1; its latest deployment is not yet verified. Apple is separately reviewing iPad build 14.
 
 ## 1. Install the Mac companion
 
-1. Follow **Download for Mac** on the [website](https://screenshot.bombadillo-ai.com). The prepared release is [Mac beta 0.5.1](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.1-beta.1), with asset `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`; that release link becomes available after publication.
+1. Follow **Download for Mac** on the [website](https://screenshot.bombadillo-ai.com), or open [Mac beta 0.5.1](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.1-beta.1) directly. Download `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`.
 2. Open the DMG and drag **Ludwig's Annotated Screenshots.app** into **Applications**. When upgrading, quit the old companion first and keep only one copy running. Earlier downloads use the Fatty Lumpkin name.
 3. Open the app and click **Set up screenshot folder** if it appears. Allow Documents and Local Network access if asked. Keep the app running while you annotate.
 
-Requires an **Apple silicon Mac running macOS 14 or later**. The local 0.5.1 app and DMG passed signature, notarization-ticket, Gatekeeper, and packaged-runtime checks. Verification of a freshly downloaded public 0.5.1 DMG remains part of publication. Apple supports this [Developer ID distribution outside the Mac App Store](https://developer.apple.com/developer-id/).
+Requires an **Apple silicon Mac running macOS 14 or later**. The freshly downloaded public 0.5.1 app and DMG passed signature, notarization-ticket, Gatekeeper, and packaged-runtime checks. Apple supports this [Developer ID distribution outside the Mac App Store](https://developer.apple.com/developer-id/).
 
 ## 2. Connect your iPad
 
@@ -28,7 +28,7 @@ On Mac, press **Shift–Command–4** and capture an area. Draw on the screensho
 
 | Component | Build | Availability |
 | --- | --- | --- |
-| Renamed Mac app and Safari companion | 0.5.1 (14) | Ready to publish as `v0.5.1-beta.1`; public download verification pending. |
+| Renamed Mac app and Safari companion | 0.5.1 (14) | Published as `v0.5.1-beta.1`; fresh public download verified. |
 | Native iPad public beta | 0.4.0 (11) | Approved and available in the existing Public Beta TestFlight group, with older branding. |
 | Renamed native iPad app | 0.5.1 (14) | Assigned to Public Beta and **Waiting for Review**; not available to external testers yet. |
 | Native iPad artwork, quotes, and Clear queue shortcut | 0.5.1 (15) | Current repository source and a local device build only; not uploaded to TestFlight. |
