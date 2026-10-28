@@ -19,3 +19,6 @@ __pycache__/
 *.pem
 
 .wrangler/
+
+# Owner-specific narration tooling; only processed website audio is published.
+/scripts/ludwig-narration.py

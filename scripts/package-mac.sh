@@ -5,7 +5,7 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 : "${SIGN_IDENTITY:?Set SIGN_IDENTITY to your Developer ID Application identity}"
 python="${BUILD_PYTHON:-$root/work/distribution-venv/bin/python}"
-app="$root/build/Fatty Lumpkin Screenshot Markup Tool.app"
+app="$root/build/Ludwig's Annotated Screenshots.app"
 "$python" -m PyInstaller --noconfirm --clean --onedir --windowed --name FattyLumpkinCompanion \
   --codesign-identity "$SIGN_IDENTITY" --distpath work/frozen --workpath work/pyinstaller --specpath work Companion/server.py
 scripts/build-icons.sh

@@ -1,10 +1,18 @@
 # Native iPad companion
 
-The iPad app is listed as **Fatty Lumpkin Screenshot Tool**. It uses SwiftUI, PencilKit, and VisionKit QR scanning, with no third-party SDKs.
+The iPad app is listed as **Ludwig's Annotated Screenshots**. It uses SwiftUI, PencilKit, and VisionKit QR scanning, with no third-party SDKs.
 
 See [build instructions](../docs/BUILDING.md), [setup](../docs/GETTING-STARTED.md), and [architecture](../docs/ARCHITECTURE.md).
 
 The native app and Safari companion share the same local Mac protocol, but keep their pairing credentials and unfinished drafts separately. Saves are full-resolution flattened PNGs, limited to 16 million pixels. Local retry data includes a stable submission ID so a dropped response does not duplicate an export.
+
+## Local build 15
+
+Build **0.5.1 (15)** adds the Ludwig drawing illustration, a quiet margin quotation that changes at launch or after a successful Done, and a visible **Clear queue** button beside Browse. Its confirmation resets the current session to zero without deleting files. Original screenshots and finished PNGs stay on the Mac; unfinished iPad drawings remain available in **Browse → To do**. Clearing waits for saving/loading and clipboard confirmation, and refuses to reset the Mac if the current draft cannot be saved locally.
+
+The quote information button opens the source and context: [Tractatus, Ogden/Ramsey 1922 translation](https://www.wittgensteinproject.org/w/index.php/Tractatus_Logico-Philosophicus_(English)), propositions 2.1, 2.12, and 4.1212. Artwork is bundled locally from the approved Ludwig illustration. It stays outside the drawing canvas.
+
+This local build is separate from **0.5.1 (14)**, which is already submitted to Beta App Review. See [local build notes](LOCAL-BUILD-15.md).
 
 ## Sessions and storage
 

@@ -104,7 +104,7 @@ struct Library {
     @Published var ready: [URL] = []
     @Published var selected: URL? { didSet { if oldValue != selected { lastExport = nil }; updatePreview() } }
     @Published var preview: NSImage?
-    @Published var message = "Take a screenshot. Open Fatty Lumpkin Markup on your iPad. Draw, then tap Done."
+    @Published var message = "Take a screenshot. Open Ludwig's Annotated Screenshots on your iPad. Draw, then tap Done."
     @Published var error: String?
     @Published var lastExport: URL?
     @Published var showPairing = false
@@ -168,7 +168,7 @@ struct Library {
         perform {
             try FileManager.default.createDirectory(at: serviceState, withIntermediateDirectories: true)
             guard let script = Bundle.main.url(forResource: "server", withExtension: "py", subdirectory: "Companion") else {
-                throw ToolError.message("The iPad companion is missing from this app. Reinstall Fatty Lumpkin Markup.")
+                throw ToolError.message("The iPad companion is missing from this app. Reinstall Ludwig's Annotated Screenshots.")
             }
             let process = Process()
             let bundled = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/FattyLumpkinCompanion.app/Contents/MacOS/FattyLumpkinCompanion")
@@ -187,7 +187,7 @@ struct Library {
         }
     }
     func checkService() {
-        guard let service, service.isRunning else { connection = "iPad connection stopped — reopen Fatty Lumpkin Markup"; return }
+        guard let service, service.isRunning else { connection = "iPad connection stopped — reopen Ludwig's Annotated Screenshots"; return }
         if token.isEmpty, let config = readJSON("server.json"), (config["pid"] as? Int) == Int(service.processIdentifier), let value = config["token"] as? String, let serverPort = config["port"] as? Int {
             token = value; port = serverPort
             if let lan = config["lan"] as? String {
@@ -200,7 +200,7 @@ struct Library {
                     qrImage = NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
                 }
                 connection = "Ready for your iPad"
-            } else { connection = "Connect this Mac to your local network, then reopen Fatty Lumpkin Markup" }
+            } else { connection = "Connect this Mac to your local network, then reopen Ludwig's Annotated Screenshots" }
         }
         guard port > 0, !checkingConnection else { return }
         checkingConnection = true
@@ -274,7 +274,7 @@ struct Library {
 
 struct BrandArt: View {
     var body: some View {
-        if let url = Bundle.main.url(forResource: "Pony", withExtension: "png"), let image = NSImage(contentsOf: url) {
+        if let url = Bundle.main.url(forResource: "BrandMark", withExtension: "png"), let image = NSImage(contentsOf: url) {
             Image(nsImage: image).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 12))
         } else { Image(systemName: "viewfinder").resizable().scaledToFit() }
     }
@@ -288,8 +288,8 @@ struct ContentView: View {
                 HStack(spacing: 10) {
                     BrandArt().frame(width: 44, height: 44)
                     VStack(alignment: .leading) {
-                        Text("Fatty Lumpkin").font(.system(.headline, design: .serif))
-                        Text("Screenshot Markup Tool").font(.caption).foregroundStyle(.secondary)
+                        Text("Ludwig's").font(.system(.headline, design: .serif))
+                        Text("Annotated Screenshots").font(.caption).foregroundStyle(.secondary)
                     }
                 }.padding(.horizontal, 12)
                 Button(action: model.latest) { Label("Select latest capture", systemImage: "sparkle.viewfinder").frame(maxWidth: .infinity) }
@@ -351,7 +351,7 @@ struct ContentView: View {
                 Divider()
                 Text(model.message).font(.callout).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
                 HStack {
-                    Text("Keep Fatty Lumpkin Markup open while using the iPad.").font(.caption).foregroundStyle(.secondary)
+                    Text("Keep Ludwig's Annotated Screenshots open while using the iPad.").font(.caption).foregroundStyle(.secondary)
                     Spacer()
                     Button("Copy file path", action: model.copyPath).disabled(model.selected == nil)
                     Button("Show ready PNG") { if let url = model.lastExport { NSWorkspace.shared.activateFileViewerSelecting([url]) } }.disabled(model.lastExport == nil)
@@ -359,7 +359,7 @@ struct ContentView: View {
             }.padding(24).frame(minWidth: 650, minHeight: 620)
         }
         .sheet(isPresented: $model.showPairing) { PairingView(model: model) }
-        .alert("Fatty Lumpkin Markup", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) { Button("OK") { model.error = nil } } message: { Text(model.error ?? "") }
+        .alert("Ludwig's Annotated Screenshots", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) { Button("OK") { model.error = nil } } message: { Text(model.error ?? "") }
     }
     func row(_ url: URL, icon: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -375,7 +375,7 @@ struct PairingView: View {
     var body: some View {
         VStack(spacing: 18) {
             HStack { Text("Connect your iPad").font(.title2.weight(.semibold)); Spacer(); Button("Close") { dismiss() } }
-            Text("In Fatty Lumpkin Markup on your iPad, tap Scan Mac QR code.").foregroundStyle(.secondary)
+            Text("In Ludwig's Annotated Screenshots on your iPad, tap Scan Mac QR code.").foregroundStyle(.secondary)
             if let qr = model.qrImage {
                 Image(nsImage: qr).interpolation(.none).resizable().scaledToFit().frame(width: 260, height: 260).padding(16).background(.white).clipShape(RoundedRectangle(cornerRadius: 16))
             } else { ProgressView().frame(width: 260, height: 200); Text(model.connection) }
@@ -397,9 +397,9 @@ struct PairingView: View {
         }
     }
     var body: some Scene {
-        Window("Fatty Lumpkin Screenshot Markup Tool", id: "main") { ContentView(model: model) }.defaultSize(width: 1080, height: 740)
-        MenuBarExtra("Fatty Lumpkin Markup", systemImage: "viewfinder") {
-            Button("Open Fatty Lumpkin Markup") { openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) }
+        Window("Ludwig's Annotated Screenshots", id: "main") { ContentView(model: model) }.defaultSize(width: 1080, height: 740)
+        MenuBarExtra("Ludwig's Annotated Screenshots", systemImage: "viewfinder") {
+            Button("Open Ludwig's Annotated Screenshots") { openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) }
             Button("Select latest capture") { model.latest(); openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) }
             Button("Connect iPad") { model.showPairing = true; openWindow(id: "main"); NSApp.activate(ignoringOtherApps: true) }
             Button("Copy selected image", action: model.copyImage).disabled(model.selected == nil)
@@ -408,7 +408,7 @@ struct PairingView: View {
             Divider()
             Button("Restore previous screenshot settings", action: model.restoreCaptures)
             Divider()
-            Button("Quit Fatty Lumpkin Markup") { NSApp.terminate(nil) }
+            Button("Quit Ludwig's Annotated Screenshots") { NSApp.terminate(nil) }
         }
     }
 }

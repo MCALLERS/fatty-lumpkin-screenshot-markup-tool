@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "duration": 36,
+  "voice": "Sarcastic Old Man",
+  "scenes": [
+    {
+      "index": 1,
+      "start": 0,
+      "end": 5,
+      "duration": 4.3187,
+      "speed": 1,
+      "src": "/assets/audio/narration-01.mp3",
+      "text": "Move that button. No, the other one. Marvellously specific."
+    },
+    {
+      "index": 2,
+      "start": 5,
+      "end": 9,
+      "duration": 3.1886,
+      "speed": 1,
+      "src": "/assets/audio/narration-02.mp3",
+      "text": "Or... show what you mean. A radical notion."
+    },
+    {
+      "index": 3,
+      "start": 9,
+      "end": 15,
+      "duration": 4.384,
+      "speed": 1,
+      "src": "/assets/audio/narration-03.mp3",
+      "text": "Capture on your Mac. There it is on your iPad, ready for your Pencil."
+    },
+    {
+      "index": 4,
+      "start": 15,
+      "end": 22,
+      "duration": 6.5464,
+      "speed": 1,
+      "src": "/assets/audio/narration-04.mp3",
+      "text": "Give it a grade. Circle the problem. Say why. B plus: good idea, a little loud."
+    },
+    {
+      "index": 5,
+      "start": 22,
+      "end": 30,
+      "duration": 5.9374,
+      "speed": 1,
+      "src": "/assets/audio/narration-05.mp3",
+      "text": "Tap Done. Wait for \"Copied on your Mac.\" Command V into your chat. Then send."
+    },
+    {
+      "index": 6,
+      "start": 30,
+      "end": 36,
+      "duration": 5.9281,
+      "speed": 1.02718,
+      "src": "/assets/audio/narration-06.mp3",
+      "text": "Review the next version. Keep what works. Mark what doesn't. Repeat. Now we're getting somewhere."
+    }
+  ]
+}

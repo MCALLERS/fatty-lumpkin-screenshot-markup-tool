@@ -18,7 +18,8 @@ with tempfile.TemporaryDirectory(prefix='fatty-lumpkin-package-test-') as tmp:
         def request(path, data=None, auth=True, headers=None):
             h={'Authorization':'Bearer '+config['token']} if auth else {};h.update(headers or {})
             with urllib.request.urlopen(urllib.request.Request(base+path,data=data,headers=h),timeout=5) as response:return response.read()
-        assert b'Fatty Lumpkin' in request('/',auth=False)
+        assert b"Ludwig's Annotated Screenshots" in request('/',auth=False)
+        assert request('/brandmark.png',auth=False).startswith(b'\x89PNG')
         assert request('/pony.png',auth=False).startswith(b'\x89PNG')
         try:request('/api/library',auth=False);raise AssertionError('Unauthenticated access accepted')
         except urllib.error.HTTPError as error: assert error.code==401;error.close()

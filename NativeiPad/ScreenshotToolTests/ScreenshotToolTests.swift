@@ -151,6 +151,98 @@ final class ScreenshotToolTests: XCTestCase {
         XCTAssertNil(store.session().pendingResetID)
         XCTAssertEqual(store.session().librarySessionID, "session-two")
     }
+    @MainActor func testClearQueueResetsToZeroAndKeepsUnfinishedInkReachableAfterRestart() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let old = capture("a", time: 1), fresh = capture("b", time: 2), png = samplePNG()
+        var list = [old], session = "session-one", mutations: [String] = []
+        NativeTestProtocol.reply = { request in
+            if request.httpMethod != "GET" { mutations.append(request.url!.path) }
+            switch request.url!.path {
+            case "/api/library": return (200, try self.libraryData(list, session: session))
+            case "/api/session/reset":
+                list = []; session = "session-two"
+                return (200, try self.libraryData([], session: session))
+            default: return (200, png)
+            }
+        }
+        await model.poll()
+        let point = PKStrokePoint(location: CGPoint(x: 30, y: 30), timeOffset: 0, size: CGSize(width: 5, height: 5), opacity: 1, force: 1, azimuth: 0, altitude: .pi / 2)
+        let ink = PKDrawing(strokes: [PKStroke(ink: PKInk(.pen, color: .red), path: PKStrokePath(controlPoints: [point], creationDate: Date()))])
+        model.drawingChanged(ink, selectionID: model.selection)
+        let canvas = PKCanvasView(); canvas.drawing = PKDrawing(strokes: ink.strokes + ink.strokes)
+        model.canvas = canvas // A final Pencil stroke can arrive before its delegate callback.
+        model.requestClearQueue()
+        XCTAssertTrue(model.showClearQueueConfirmation); XCTAssertTrue(mutations.isEmpty)
+        model.showClearQueueConfirmation = false // Cancelling the prompt leaves the queue untouched.
+        XCTAssertEqual(model.current?.id, old.id)
+        await model.clearQueue()
+        XCTAssertEqual(mutations, ["/api/session/reset"], "Clearing the queue must never invoke file cleanup")
+        XCTAssertNil(model.current); XCTAssertTrue(model.queue.ids.isEmpty)
+        XCTAssertEqual(model.navigationPosition, "0 screenshots")
+        let store = try DraftStore(namespace: try XCTUnwrap(model.connection).namespace, root: root)
+        XCTAssertEqual(store.imageData(old.id), png)
+        XCTAssertEqual(store.drawing(old.id).strokes.count, 2)
+        XCTAssertTrue(store.draft(old.id)?.dirty == true)
+        XCTAssertNil(store.session().currentID, "Restart must retain the empty queue instead of reopening its hidden draft")
+        let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [NativeTestProtocol.self]
+        let reopened = WorkspaceModel(connection: model.connection, configuration: config, draftRoot: root)
+        await reopened.poll()
+        XCTAssertEqual(reopened.navigationPosition, "0 screenshots"); XCTAssertNil(reopened.current)
+        reopened.browse()
+        XCTAssertEqual(reopened.browser?.draftIDs, [old.id])
+        let restored = await reopened.open(old)
+        XCTAssertTrue(restored); XCTAssertEqual(reopened.drawing.strokes.count, 2)
+        reopened.browser = nil
+        await reopened.clearQueue()
+        list = [fresh]
+        await reopened.poll()
+        XCTAssertEqual(reopened.current?.id, fresh.id)
+        XCTAssertEqual(reopened.navigationPosition, "1 of 1")
+    }
+    @MainActor func testClearQueueRetryAfterRestartUsesTheSameResetAndKeepsItsDraft() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let old = capture("a", time: 1), png = samplePNG()
+        var ids: [String] = []
+        NativeTestProtocol.reply = { request in
+            if request.url!.path == "/api/library" { return (200, try self.libraryData([old])) }
+            if request.url!.path == "/api/session/reset" {
+                let body = try JSONDecoder().decode([String: String].self, from: self.requestBody(request))
+                ids.append(try XCTUnwrap(body["requestID"]))
+                return ids.count == 1 ? (500, Data()) : (200, try self.libraryData([], session: "session-two"))
+            }
+            return (200, png)
+        }
+        await model.poll(); model.drawingChanged(PKDrawing(), selectionID: model.selection)
+        model.busy = true; await model.clearQueue(); XCTAssertTrue(ids.isEmpty)
+        model.busy = false; await model.clearQueue()
+        XCTAssertNotNil(model.error); XCTAssertEqual(model.current?.id, old.id)
+        let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [NativeTestProtocol.self]
+        let reopened = WorkspaceModel(connection: model.connection, configuration: config, draftRoot: root)
+        await reopened.poll(); await reopened.clearQueue()
+        XCTAssertEqual(ids.count, 2); XCTAssertEqual(ids.first, ids.last)
+        XCTAssertNil(reopened.current); XCTAssertEqual(reopened.navigationPosition, "0 screenshots")
+        reopened.browse(); XCTAssertTrue(reopened.browser?.draftIDs.contains(old.id) == true)
+    }
+    @MainActor func testClearQueueDoesNotHideDrawingWhenLocalDraftCannotBeSaved() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let old = capture("a", time: 1), png = samplePNG()
+        var resets = 0
+        NativeTestProtocol.reply = { request in
+            if request.url!.path == "/api/library" { return (200, try self.libraryData([old])) }
+            if request.url!.path == "/api/session/reset" { resets += 1; return (200, try self.libraryData([], session: "session-two")) }
+            return (200, png)
+        }
+        await model.poll(); model.drawingChanged(PKDrawing(), selectionID: model.selection)
+        let store = try DraftStore(namespace: try XCTUnwrap(model.connection).namespace, root: root)
+        try FileManager.default.moveItem(at: store.folder, to: store.folder.appendingPathExtension("preserved"))
+        try Data("blocked draft directory".utf8).write(to: store.folder)
+        await model.clearQueue()
+        XCTAssertEqual(resets, 0); XCTAssertEqual(model.current?.id, old.id); XCTAssertTrue(model.dirty)
+        XCTAssertNotNil(model.error)
+    }
     @MainActor func testUnfinishedDraftOnAnotherScreenshotBlocksResetAndCleanup() async throws {
         let (model, root) = try navigationFixture()
         defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
@@ -200,7 +292,7 @@ final class ScreenshotToolTests: XCTestCase {
         await model.poll(); await model.finish()
         XCTAssertNil(model.current)
         XCTAssertTrue(model.sessionActionIssue?.contains("clipboard") == true)
-        await model.startNewSession(); XCTAssertEqual(resets, 0)
+        await model.startNewSession(); await model.clearQueue(); XCTAssertEqual(resets, 0)
         await model.poll()
         XCTAssertNil(model.sessionActionIssue)
         await model.startNewSession(); XCTAssertEqual(resets, 1)

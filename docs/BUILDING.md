@@ -25,7 +25,7 @@ uv venv --python 3.14.10 --managed-python --seed work/distribution-venv
 work/distribution-venv/bin/python -m pip install 'pyinstaller==6.22.3'
 export SIGN_IDENTITY='Developer ID Application: Your Name (TEAMID)'
 scripts/package-mac.sh
-python3 scripts/verify-packaged-companion.py 'build/Fatty Lumpkin Screenshot Markup Tool.app'
+python3 scripts/verify-packaged-companion.py "build/Ludwig's Annotated Screenshots.app"
 ```
 
 Recheck ThirdParty notices when changing the Python installation: PyInstaller bundles native libraries from that installation. The script signs the helper and its dependencies, then the outer app with hardened runtime. See RELEASING.md for notarization. No signing secrets belong in this repository.

@@ -1,6 +1,6 @@
 # Privacy policy
 
-Effective 28 October 2026. Applies to Fatty Lumpkin Screenshot Markup Tool, including the iPad app listed as Fatty Lumpkin Screenshot Tool.
+Effective 28 October 2026. Applies to Ludwig's Annotated Screenshots, including the iPad app listed as Ludwig's Annotated Screenshots.
 
 ## What the app does
 

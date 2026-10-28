@@ -335,7 +335,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self.safe_request():
             return
         path = urlsplit(self.path).path
-        assets = {'/pony.png': ('pony.png', 'image/png'), '/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript; charset=utf-8'), '/style.css': ('style.css', 'text/css; charset=utf-8')}
+        assets = {'/brandmark.png': ('brandmark.png', 'image/png'), '/pony.png': ('brandmark.png', 'image/png'), '/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript; charset=utf-8'), '/style.css': ('style.css', 'text/css; charset=utf-8')}
         if path in assets:
             file, kind = assets[path]
             return self.response(200, (self.server.assets / file).read_bytes(), kind)

@@ -1,6 +1,6 @@
-<p align="center"><img src="Branding/pony-bookplate.png" width="280" alt="A shaggy pony carrying a red pencil, illustrated on parchment"></p>
+<p align="center"><img src="Branding/BrandMark.png" width="280" alt="Screenshot corners, an annotation, and a pencil"></p>
 
-# Fatty Lumpkin Screenshot Markup Tool
+# Ludwig's Annotated Screenshots
 
 **Capture on your Mac. Draw on your iPad. Paste into your AI agent.**
 
@@ -10,7 +10,16 @@ A small Mac companion and a native PencilKit iPad app that turn screenshots into
 
 ## Availability
 
-The first release is a beta for **Apple silicon Macs running macOS 14 or later**. The native iPad app requires **iPadOS 18 or later** and is available through [TestFlight](https://testflight.apple.com/join/bFbsKKmV) as **Fatty Lumpkin Screenshot Tool**. The Safari companion is also included with the Mac download.
+Start at the [website](https://screenshot.bombadillo-ai.com) for the workflow, Mac download, and iPad invitation. The Mac companion requires **Apple silicon and macOS 14 or later**; the native iPad app requires **iPadOS 18 or later**. Safari is included with the Mac companion and can be used immediately without TestFlight.
+
+| Component | Current status |
+| --- | --- |
+| Mac 0.5.1 (14) | Renamed, signed, notarized, and ready to publish as `v0.5.1-beta.1`; public download and website update verification pending. |
+| Native iPad 0.4.0 (11) | Approved public TestFlight build, still showing the earlier Fatty Lumpkin branding. |
+| Native iPad 0.5.1 (14) | Renamed build assigned to Public Beta; **Waiting for Review**. |
+| Native iPad 0.5.1 (15) | Current repository source and local device build, including Ludwig artwork, quotes, and Clear queue; not uploaded to TestFlight. |
+
+The prepared Mac asset is `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`. Until its publication is verified, the earlier Mac 0.5.0 release remains the public download. See [sharing the beta](docs/SHARING-BETA.md) and the [upgrade note](docs/GETTING-STARTED.md#updating-from-fatty-lumpkin).
 
 ## The everyday loop
 
@@ -19,7 +28,7 @@ The first release is a beta for **Apple silicon Macs running macOS 14 or later**
 3. On iPad, annotate with Apple Pencil. Tap **Done** or **Done & Next**.
 4. Wait for the confirmation that it was copied on your Mac, then press **⌘V** in Codex, Claude Code, or another app that accepts images.
 
-Capture several screenshots and annotate them in order. Use **Session** on iPad to reset the count for a new task, then optionally move previous-session screenshots to the Mac’s Trash after reviewing the file count. Both apps need version 0.5.0 or later for session controls. Originals stay intact until you choose cleanup. Finished PNGs collect in **Documents → Screenshot Tool → Ready**. Press **⌃⌥⌘S** on your Mac to open that folder from any app while the companion is running.
+Capture several screenshots and annotate them in order. Use **Session** on iPad to reset the count for a new task, then optionally move previous-session screenshots to the Mac’s Trash after reviewing the file count. Both apps need version 0.5.0 or later for session controls; the currently approved native iPad 0.4.0 build does not include them. Originals stay intact until you choose cleanup. Finished PNGs collect in **Documents → Screenshot Tool → Ready**. Press **⌃⌥⌘S** on your Mac to open that folder from any app while the companion is running.
 
 The native app uses PencilKit for Pencil strokes, undo/redo, pan and zoom, and local draft recovery. The Safari version remains included as an alternative. Pairing is remembered; both devices must remain on the same trusted local network. A changed Mac IP address requires reopening the Mac companion and scanning its new QR code.
 
@@ -39,4 +48,6 @@ There is no app account, analytics SDK, cloud relay, or AI service integration. 
 - [Agent workflow skill](skills/screenshot-feedback/SKILL.md)
 - [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
-The code is available under the [MIT license](LICENSE). The pony artwork was generated for this project; see [art direction and prompt](Branding/ART-DIRECTION.md). This is an independent project, with no affiliation with Apple, OpenAI, Anthropic, or any fantasy franchise.
+The repository includes native iPad source for local build 15, beyond the separate build 14 archive submitted to Apple. See [local build 15 notes](NativeiPad/LOCAL-BUILD-15.md); publishing this source does not publish that iPad build to TestFlight.
+
+The code is available under the [MIT license](LICENSE). The screenshot-and-pencil icon is an original vector mark; see [brand assets and provenance](Branding/ART-DIRECTION.md). This is an independent project, with no affiliation with Apple, OpenAI, Anthropic, or any fantasy franchise.

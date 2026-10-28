@@ -12,7 +12,7 @@ import PencilKit
     @Published var busy = false
     @Published var dirty = false
     @Published var connected = false
-    @Published var status = "Connect to Fatty Lumpkin on your Mac."
+    @Published var status = "Connect to Ludwig's Annotated Screenshots on your Mac."
     @Published var error: String?
     @Published var fingerDrawing = false
     @Published var showPairing = false
@@ -34,6 +34,9 @@ import PencilKit
     @Published private(set) var loadingID: String?
     @Published var browser: CaptureBrowserSnapshot?
     @Published var showSessionManager = false
+    @Published var showClearQueueConfirmation = false
+    @Published var showLudwigAbout = false
+    @Published private(set) var completedCaptureCount = 0
     @Published private(set) var librarySession: LibrarySession?
     @Published private(set) var supportsSessions = false
     @Published private(set) var cleanupPreview: CleanupPreview?
@@ -82,16 +85,54 @@ import PencilKit
         if let current, dirty || submission != nil { ids.insert(current.id) }
         return ids.count
     }
-    var sessionActionIssue: String? {
+    var clearQueueIssue: String? {
         if !connected { return "Connect to your Mac to manage sessions." }
         if !supportsSessions { return "Update the Mac companion to version 0.5.0 or later to manage sessions. Your screenshots and drawings are kept." }
         if acknowledgement != nil { return "Wait for the Mac’s clipboard confirmation before changing sessions." }
+        return nil
+    }
+    var sessionActionIssue: String? {
+        if let issue = clearQueueIssue { return issue }
         if unfinishedDrawingCount > 0 { return "Finish your unfinished drawings with Done before changing sessions. Find them under Browse → To do. If a source was removed from your Mac, you can explicitly discard that drawing there." }
         return nil
     }
     func manageSession() {
         guard !busy, loadingID == nil else { return }
         persist(); error = nil; cleanupPreview = nil; sessionNotice = nil; showSessionManager = true
+    }
+    func requestClearQueue() {
+        guard !busy, loadingID == nil, !captures.isEmpty || current != nil else { return }
+        if let issue = clearQueueIssue { error = issue; return }
+        error = nil; showClearQueueConfirmation = true
+    }
+    func clearQueue() async {
+        guard !busy, loadingID == nil else { return }
+        if let issue = clearQueueIssue { error = issue; return }
+        guard let client, let drafts else { error = "Could not open local drafts. Your queue has not changed."; return }
+        busy = true; revision += 1; error = nil; cleanupPreview = nil
+        draftTask?.cancel(); draftTask = nil
+        defer { busy = false }
+        do {
+            // Snapshot the final Pencil stroke and require durable local storage before resetting the Mac.
+            if let canvas, canvas.drawing.dataRepresentation() != drawing.dataRepresentation() {
+                drawing = canvas.drawing; dirty = true; submission = nil
+            }
+            if let current {
+                try drafts.write(DraftMetadata(capture: current, dirty: dirty, submission: submission), drawing: drawing)
+            }
+            if pendingResetID == nil { pendingResetID = UUID().uuidString.lowercased() }
+            try drafts.session(SessionMetadata(queue: queue, currentID: current?.id, librarySessionID: librarySessionID, pendingResetID: pendingResetID))
+            let result = try await client.newSession(requestID: pendingResetID!)
+            guard result.supportsSessions == true, result.session != nil else {
+                throw AppError.message("The Mac did not confirm the cleared queue. Try again; the same request will be reused.")
+            }
+            clearSelection(); queue = CaptureQueue(); locallySaved = []; browser = nil
+            applyLibrary(result); pendingResetID = nil; persistSession()
+            status = "Queue cleared. Ready for your next screenshot."
+            sessionNotice = "The count is 0. Files stay on your Mac; unfinished drawings stay under Browse → To do."
+        } catch {
+            self.error = "The queue could not be cleared. Your drawing is kept here. " + friendly(error)
+        }
     }
     func startNewSession() async {
         guard let client, !busy, loadingID == nil else { return }
@@ -202,9 +243,9 @@ import PencilKit
             let result = try await client.libraryState()
             guard !busy, loadingID == nil, revision == requestRevision else { return }
             applyLibrary(result); connected = true
-            if browser == nil, !showSessionManager, current == nil, let first = pending.first { await open(first, manual: false) }
+            if browser == nil, !showSessionManager, !showClearQueueConfirmation, !showLudwigAbout, current == nil, let first = pending.first { await open(first, manual: false) }
             else if current == nil, completedMessage == nil { status = "Ready for your next screenshot." }
-            else if browser == nil, !showSessionManager, let current, !dirty, !manualSelection, current.saved, let first = pending.first { await open(first, manual: false) }
+            else if browser == nil, !showSessionManager, !showClearQueueConfirmation, !showLudwigAbout, let current, !dirty, !manualSelection, current.saved, let first = pending.first { await open(first, manual: false) }
             persistSession()
             if let expected = acknowledgement {
                 let result = try await client.status()
@@ -219,7 +260,7 @@ import PencilKit
             }
         } catch {
             connected = false
-            status = current == nil ? "Mac unavailable. Keep Fatty Lumpkin open on the same network." : "Connection interrupted. Your drawing is kept on this iPad."
+            status = current == nil ? "Mac unavailable. Keep Ludwig's Annotated Screenshots open on the same network." : "Connection interrupted. Your drawing is kept on this iPad."
         }
     }
     @discardableResult func open(_ capture: Capture, manual: Bool = true) async -> Bool {
@@ -297,6 +338,7 @@ import PencilKit
             status = "Sending to your Mac…"
             let receipt = try await client.save(bytes, capture: capture, id: id)
             guard receipt.id == id else { throw AppError.message("The Mac returned an unexpected save confirmation. Your draft is kept here.") }
+            completedCaptureCount += 1
             locallySaved.insert(capture.id)
             if let index = captures.firstIndex(where: { $0.id == capture.id }) { captures[index].saved = true }
             current?.saved = true; dirty = false; submission = nil; persist()
@@ -314,7 +356,7 @@ import PencilKit
     func friendly(_ error: Error) -> String {
         if let url = error as? URLError {
             switch url.code {
-            case .timedOut: return "The Mac took too long to respond. Keep Fatty Lumpkin open and try again. Your drawing is kept here."
+            case .timedOut: return "The Mac took too long to respond. Keep Ludwig's Annotated Screenshots open and try again. Your drawing is kept here."
             case .notConnectedToInternet, .cannotConnectToHost, .cannotFindHost, .networkConnectionLost:
                 return "Could not reach your Mac. Keep both devices on the same local network and allow Local Network access for this app in Settings."
             default: return "Connection failed. Check the Mac app and your local network, then try again."
