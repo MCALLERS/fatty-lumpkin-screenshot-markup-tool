@@ -16,11 +16,17 @@ Cleanup applies to the **Mac screenshot repository**. This release retains local
 
 ## Verification
 
+All **50 automated tests passed**:
+
 - 17 Python companion-protocol tests passed.
 - 15 JavaScript input and queue tests passed.
 - 18 native iPad simulator tests passed, including session reset and retry, unfinished-draft protection, clipboard acknowledgement, cleanup conflicts, missing-source recovery, and existing navigation regressions.
 - The new-session regression failed before the implementation and passed afterward.
 - Native iPad portrait and landscape layouts, plus the Session panel, were visually reviewed with synthetic content in the simulator. Secondary text contrast was strengthened after review.
-- No physical-device or Apple Pencil validation was performed in this run. Simulator checks do not establish device behavior, distribution approval, or live website availability.
+- The iPad build was installed on a physical device over USB. The end-to-end capture, Apple Pencil, save, and clipboard workflow has not been tested on that device in this run.
 
-Release publication and deployment outcomes are recorded separately after verification.
+## Publication status
+
+- **Mac:** Version 0.5.0 is public in [GitHub release v0.5.0-beta.1](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.0-beta.1). The app and DMG were notarized. The downloaded DMG passed SHA-256 verification, stapling validation, Gatekeeper assessment, and the packaged companion-protocol check. The verified downloaded app was installed at `~/Applications/Screenshot Tool.app`; the prior installation was retained in the ignored `work/` directory.
+- **iPad:** Version **0.5.0 (13)** was installed over USB, uploaded to App Store Connect, and submitted to the **Public Beta** group. Its status is **Waiting for Review**; build 13 is not yet publicly available. The [public TestFlight invitation](https://testflight.apple.com/join/bFbsKKmV) was verified as accepting testers, with the earlier 0.4.0 build approved.
+- **Website:** Deployment of `screenshot.bombadillo-ai.com` is pending.

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://screenshot.bombadillo-ai.com/sitemap.xml

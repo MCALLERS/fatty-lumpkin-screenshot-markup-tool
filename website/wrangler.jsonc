@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fatty-lumpkin-screenshot-site",
+  "account_id": "09711348bca73887d1f3ce8e939dd32b",
+  "compatibility_date": "2026-10-28",
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    { "pattern": "screenshot.bombadillo-ai.com", "custom_domain": true }
+  ]
+}
