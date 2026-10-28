@@ -28,6 +28,25 @@ with tempfile.TemporaryDirectory(prefix='fatty-lumpkin-package-test-') as tmp:
         assert saved==again
         exports=list((lib/'Ready').glob('*.png'));assert len(exports)==1 and exports[0].read_bytes()==data
         assert file.read_bytes()==original
-        print('PASS: packaged runtime starts without Homebrew PATH; branded assets, authenticated library, PNG save, idempotent retry, original preservation.')
+        def post_json(path, payload):
+            return json.loads(request(path,json.dumps(payload).encode(),headers={'Content-Type':'application/json'}))
+        reset_id=str(uuid.uuid4())
+        session=post_json('/api/session/reset',{'requestID':reset_id})
+        assert session['supportsSessions'] and session['captures']==[]
+        assert json.loads(request('/api/library'))['captures']==[]
+        assert file.read_bytes()==original and exports[0].read_bytes()==data
+        fresh=lib/'Inbox/New-session.png';fresh.write_bytes(original);os.utime(fresh,(time.time()-3,time.time()-3))
+        assert post_json('/api/session/reset',{'requestID':reset_id})==session
+        assert len(json.loads(request('/api/library'))['captures'])==1
+        preview=json.loads(request('/api/library/cleanup'))
+        assert preview['captureCount']==1 and preview['fileCount']==2
+        cleaned=post_json('/api/library/cleanup',{'token':preview['token']})
+        assert cleaned['movedFiles']==2 and cleaned['movedBytes']==len(original)+len(data)
+        assert post_json('/api/library/cleanup',{'token':preview['token']})==cleaned
+        assert not file.exists() and not exports[0].exists() and fresh.read_bytes()==original
+        batches=list((temp/'.Trash').iterdir());assert len(batches)==1
+        assert (batches[0]/'Inbox/Synthetic.png').read_bytes()==original
+        assert (batches[0]/'Ready'/saved['filename']).read_bytes()==data
+        print('PASS: packaged runtime starts without Homebrew PATH; branded assets, authenticated library, PNG save/retry, original preservation, session reset/retry, previous-session cleanup/retry, synthetic Trash recovery, current-session preservation.')
     finally:
         process.terminate();process.wait(timeout=10)

@@ -1,8 +1,9 @@
 'use strict';
 const $ = s => document.querySelector(s);
 const canvas = $('#ink'), ctx = canvas.getContext('2d'), paper = $('#paper'), workspace = $('#workspace');
-const state = {capture:null, captures:[], queue:[], manual:false, image:null, strokes:[], redo:[], active:null, dirty:false, saving:false, tool:'pen', color:'#ed4359', zoom:1, fit:1, pending:null, submission:null, lastCopied:null, finishedCount:0};
+const state = {capture:null, captures:[], queue:[], session:null, manual:false, image:null, strokes:[], redo:[], active:null, dirty:false, saving:false, tool:'pen', color:'#ed4359', zoom:1, fit:1, pending:null, submission:null, lastCopied:null, finishedCount:0};
 try{const queue=JSON.parse(localStorage.getItem('screenshot-queue'));if(Array.isArray(queue))state.queue=queue.filter(x=>typeof x==='string');}catch{}
+try{state.session=localStorage.getItem('screenshot-session');}catch{}
 const pointers = new Map();
 let frame = 0, pan = null, pinch = null, loadSerial = 0, pollBusy = false, penUntil = 0, libraryRevision = 0;
 function status(text, kind='') { $('#status').textContent=text; $('#status').className=kind; }
@@ -159,6 +160,13 @@ async function refresh() {
   if(pollBusy||state.saving)return;pollBusy=true;const revision=libraryRevision;
   try {
     const result=await api('/api/library');if(revision!==libraryRevision||state.saving)return;$('#pairing').hidden=true;$('#connection').textContent='Connected to your Mac';
+    const sessionChanged=result.session?.id&&state.session&&result.session.id!==state.session;
+    if(sessionChanged){
+      state.queue=[];state.finishedCount=0;state.lastCopied=null;$('#complete').hidden=true;
+      if(!state.dirty&&!state.active)clearWorkspace();
+      else{persist();status('A new session started. Your drawing is kept here. Tap Done to save it.');}
+    }
+    if(result.session?.id){state.session=result.session.id;try{localStorage.setItem('screenshot-session',state.session);}catch{}}
     state.captures=result.captures;syncQueue();options();const next=waiting()[0];
     if(!state.capture&&!state.saving){
       let restored;try{const id=localStorage.getItem('screenshot-current');const draft=JSON.parse(localStorage.getItem('screenshot-draft-'+id));restored=state.captures.find(c=>c.id===id&&(draft?.dirty||!c.saved));}catch{}

@@ -17,3 +17,5 @@ __pycache__/
 *.mobileprovision
 *.key
 *.pem
+
+.wrangler/

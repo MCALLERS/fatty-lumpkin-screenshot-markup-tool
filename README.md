@@ -6,11 +6,11 @@
 
 A small Mac companion and a native PencilKit iPad app that turn screenshots into clear visual feedback. Circle the awkward button, sketch a new layout, or write a note—then tap **Done**. Your marked-up PNG is saved on the Mac and copied to its clipboard.
 
-[Mac downloads](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases) · [Getting started](docs/GETTING-STARTED.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Privacy](docs/PRIVACY.md)
+[Website](https://screenshot.bombadillo-ai.com) · [iPad TestFlight](https://testflight.apple.com/join/bFbsKKmV) · [Mac downloads](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases) · [Getting started](docs/GETTING-STARTED.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Privacy](docs/PRIVACY.md)
 
 ## Availability
 
-The first release is a beta for **Apple silicon Macs running macOS 14 or later**. The native iPad app requires **iPadOS 18 or later** and will be distributed through TestFlight as **Fatty Lumpkin Screenshot Tool**. A public TestFlight invitation will be added here after Apple’s beta review. The Safari companion works with the Mac download in the meantime.
+The first release is a beta for **Apple silicon Macs running macOS 14 or later**. The native iPad app requires **iPadOS 18 or later** and is available through [TestFlight](https://testflight.apple.com/join/bFbsKKmV) as **Fatty Lumpkin Screenshot Tool**. The Safari companion is also included with the Mac download.
 
 ## The everyday loop
 
@@ -19,7 +19,7 @@ The first release is a beta for **Apple silicon Macs running macOS 14 or later**
 3. On iPad, annotate with Apple Pencil. Tap **Done** or **Done & Next**.
 4. Wait for the confirmation that it was copied on your Mac, then press **⌘V** in Codex, Claude Code, or another app that accepts images.
 
-Capture several screenshots and annotate them in order. Originals stay intact. Finished PNGs collect in **Documents → Screenshot Tool → Ready**. Press **⌃⌥⌘S** on your Mac to open that folder from any app while the companion is running.
+Capture several screenshots and annotate them in order. Use **Session** on iPad to reset the count for a new task, then optionally move previous-session screenshots to the Mac’s Trash after reviewing the file count. Both apps need version 0.5.0 or later for session controls. Originals stay intact until you choose cleanup. Finished PNGs collect in **Documents → Screenshot Tool → Ready**. Press **⌃⌥⌘S** on your Mac to open that folder from any app while the companion is running.
 
 The native app uses PencilKit for Pencil strokes, undo/redo, pan and zoom, and local draft recovery. The Safari version remains included as an alternative. Pairing is remembered; both devices must remain on the same trusted local network. A changed Mac IP address requires reopening the Mac companion and scanning its new QR code.
 

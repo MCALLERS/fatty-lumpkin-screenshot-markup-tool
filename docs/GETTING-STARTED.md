@@ -14,7 +14,7 @@
 
 Use the same trusted local network on both devices. Guest networks often prevent devices from communicating.
 
-**Native app:** install the TestFlight beta when an invitation is available. Open **Fatty Lumpkin Screenshot Tool**, tap **Connect your Mac**, then **Scan Mac QR code**. On Mac, click **Connect iPad**. Scan that QR code from inside the iPad app. Allow Camera and Local Network access.
+**Native app:** install the [TestFlight beta](https://testflight.apple.com/join/bFbsKKmV). Open **Fatty Lumpkin Screenshot Tool**, tap **Connect your Mac**, then **Scan Mac QR code**. On Mac, click **Connect iPad**. Scan that QR code from inside the iPad app. Allow Camera and Local Network access.
 
 **Safari alternative:** scan the Mac QR code with the iPad Camera app and open the link in Safari. Use **Share → Add to Home Screen** to save a shortcut. You can bookmark the paired page too.
 
@@ -40,6 +40,18 @@ The clipboard contains the most recently completed image. For the whole batch, p
 Tap **Browse screenshots** to open the screenshot browser. It lists captures oldest first, with search and **All / To do / Saved** filters. **Oldest** and **Newest** jump to either end. The list stays fixed while it is open; close and reopen it to include newly captured screenshots.
 
 Use the left and right arrows above the canvas to move through captures in chronological order. Unfinished Pencil drawings stay with each screenshot when you switch. **Done & Next** still saves to your Mac and advances through the unfinished queue; the navigation arrows simply open another screenshot without exporting it.
+
+## Start fresh or clear older sessions (0.5.0+)
+
+Update both the Mac companion and native iPad app to 0.5.0 or later. On iPad, tap **Session** beside **Browse**.
+
+- **New session · Reset count** clears the visible queue and resets its count to **0 screenshots**. New captures start at 1. Previous originals and finished PNGs stay in their existing Mac folders and remain available in Finder.
+- **Review older files…** shows how many previous-session screenshots and files can be cleared, including their size. Confirm **Move files to Mac Trash** only when you no longer need those sessions. The current session is kept. To clear everything currently displayed, start a new session first, then review the older files.
+- Finish unfinished drawings with **Done** before resetting or clearing files. An interrupted request can be retried safely.
+
+Cleared files are grouped in a **Fatty Lumpkin** folder in your Mac’s Trash, with their Inbox, Annotated, and Ready subfolders. To recover them, open Trash in Finder and move the files back to the corresponding Screenshot Tool folders. Nothing is permanently erased by the app. Emptying Trash is a separate macOS action. Local iPad drawings and cached copies are retained; cleanup manages the Mac screenshot folders.
+
+A session reset is shared with paired clients. If another iPad or Safari window is still drawing, it keeps the unfinished work so it can be saved. Coordinate cleanup when using more than one client.
 
 ## Where everything lives
 

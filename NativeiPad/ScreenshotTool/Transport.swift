@@ -29,10 +29,20 @@ final class MacClient {
         guard data.count <= 40 * 1024 * 1024 else { throw AppError.message("That image is too large. Capture a smaller area on the Mac.") }
         return data
     }
-    func library() async throws -> [Capture] {
+    func libraryState() async throws -> LibraryResponse {
         let result = try JSONDecoder().decode(LibraryResponse.self, from: await request("api/library"))
         guard result.captures.count <= 100, Set(result.captures.map(\.id)).count == result.captures.count else { throw AppError.message("The Mac returned an invalid screenshot list.") }
-        return result.captures
+        return result
+    }
+    func library() async throws -> [Capture] { try await libraryState().captures }
+    func newSession(requestID: String) async throws -> LibraryResponse {
+        try JSONDecoder().decode(LibraryResponse.self, from: await request("api/session/reset", body: JSONEncoder().encode(["requestID": requestID]), headers: ["Content-Type": "application/json"]))
+    }
+    func cleanupPreview() async throws -> CleanupPreview {
+        try JSONDecoder().decode(CleanupPreview.self, from: await request("api/library/cleanup"))
+    }
+    func cleanup(_ preview: CleanupPreview) async throws -> CleanupReceipt {
+        try JSONDecoder().decode(CleanupReceipt.self, from: await request("api/library/cleanup", body: JSONEncoder().encode(["token": preview.token]), headers: ["Content-Type": "application/json"]))
     }
     func image(_ capture: Capture) async throws -> Data {
         guard capture.valid else { throw AppError.message("This screenshot is too large to draw on. Capture a smaller area.") }

@@ -10,7 +10,7 @@ struct PencilSurface: UIViewControllerRepresentable {
         controller.changed = { [weak model] drawing in model?.drawingChanged(drawing, selectionID: selection) }
         controller.configure(image: image, size: CGSize(width: capture.width, height: capture.height), drawing: model.drawing, selection: selection)
         controller.canvas.drawingPolicy = model.fingerDrawing ? .anyInput : .pencilOnly
-        controller.setDrawingActive(!model.busy && model.loadingID == nil && model.browser == nil && !model.showPairing)
+        controller.setDrawingActive(!model.busy && model.loadingID == nil && model.browser == nil && !model.showPairing && !model.showSessionManager)
         model.canvas = controller.canvas
         model.fitCanvas = { [weak controller] in controller?.fit() }
     }
@@ -30,7 +30,7 @@ final class DrawingController: UIViewController, UIScrollViewDelegate, PKCanvasV
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor(red: 0.91, green: 0.94, blue: 0.93, alpha: 1)
+        view.backgroundColor = UIColor(red: 0.94, green: 0.94, blue: 0.91, alpha: 1)
         scroll.delegate = self; scroll.alwaysBounceVertical = true; scroll.alwaysBounceHorizontal = true
         scroll.panGestureRecognizer.minimumNumberOfTouches = 2
         scroll.panGestureRecognizer.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.direct.rawValue)]

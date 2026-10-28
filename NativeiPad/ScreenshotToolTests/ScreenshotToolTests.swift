@@ -97,6 +97,182 @@ final class ScreenshotToolTests: XCTestCase {
         XCTAssertFalse(opened); XCTAssertEqual(model.current?.id, first.id); XCTAssertEqual(model.selection, selection)
         XCTAssertNotNil(model.browser); XCTAssertNotNil(model.error); XCTAssertNil(model.loadingID)
     }
+    @MainActor func testNewSessionOnMacClearsOldSelectionAndStartsAtZero() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let old = capture("a", time: 1, saved: true), png = samplePNG()
+        var sessionID = "session-one"
+        var list = [old]
+        NativeTestProtocol.reply = { request in
+            if request.url!.path == "/api/library" {
+                let encoded = try JSONSerialization.jsonObject(with: JSONEncoder().encode(list))
+                return (200, try JSONSerialization.data(withJSONObject: ["captures": encoded, "supportsSessions": true, "session": ["id": sessionID, "startedAt": 1]]))
+            }
+            return (200, png)
+        }
+        await model.poll(); await model.open(old)
+        XCTAssertEqual(model.current?.id, old.id)
+        sessionID = "session-two"; list = []
+        await model.poll()
+        XCTAssertNil(model.current, "Starting a new session on the Mac must clear the previous session's clean selection")
+        XCTAssertTrue(model.queue.ids.isEmpty)
+        XCTAssertEqual(model.navigationPosition, "0 screenshots")
+    }
+    private func libraryData(_ captures: [Capture], session: String = "session-one") throws -> Data {
+        let encoded = try JSONSerialization.jsonObject(with: JSONEncoder().encode(captures))
+        return try JSONSerialization.data(withJSONObject: ["captures": encoded, "supportsSessions": true, "session": ["id": session, "startedAt": 1]])
+    }
+    @MainActor func testResetRetriesWithSameRequestIDAndKeepsOriginalDraftCache() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let old = capture("a", time: 1, saved: true), png = samplePNG()
+        var resets: [String] = []
+        NativeTestProtocol.reply = { request in
+            switch request.url!.path {
+            case "/api/library": return (200, try self.libraryData([old]))
+            case "/api/session/reset":
+                XCTAssertEqual(request.httpMethod, "POST")
+                XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer unit-test-navigation")
+                XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
+                let body = try JSONDecoder().decode([String: String].self, from: self.requestBody(request))
+                resets.append(try XCTUnwrap(body["requestID"]))
+                return resets.count == 1 ? (500, Data()) : (200, try self.libraryData([], session: "session-two"))
+            default: return (200, png)
+            }
+        }
+        await model.poll(); await model.open(old)
+        await model.startNewSession()
+        XCTAssertEqual(model.current?.id, old.id); XCTAssertNotNil(model.error)
+        await model.startNewSession()
+        XCTAssertEqual(resets.count, 2); XCTAssertEqual(resets[0], resets[1]); XCTAssertNotNil(UUID(uuidString: resets[0]))
+        XCTAssertNil(model.current); XCTAssertTrue(model.captures.isEmpty); XCTAssertEqual(model.navigationPosition, "0 screenshots")
+        let store = try DraftStore(namespace: try XCTUnwrap(model.connection).namespace, root: root)
+        XCTAssertNotNil(store.image(old.id), "Reset must not delete previous images")
+        XCTAssertNil(store.session().pendingResetID)
+        XCTAssertEqual(store.session().librarySessionID, "session-two")
+    }
+    @MainActor func testUnfinishedDraftOnAnotherScreenshotBlocksResetAndCleanup() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let first = capture("a", time: 1, saved: true), second = capture("b", time: 2, saved: true), png = samplePNG()
+        var requests: [String] = []
+        NativeTestProtocol.reply = { request in
+            requests.append(request.url!.path)
+            return request.url!.path == "/api/library" ? (200, try self.libraryData([first, second])) : (200, png)
+        }
+        await model.poll(); await model.open(first)
+        model.drawingChanged(PKDrawing(), selectionID: model.selection)
+        await model.open(second)
+        XCTAssertFalse(model.dirty); XCTAssertEqual(model.unfinishedDrawingCount, 1)
+        await model.startNewSession(); await model.previewCleanup()
+        XCTAssertFalse(requests.contains("/api/session/reset")); XCTAssertFalse(requests.contains("/api/library/cleanup"))
+        XCTAssertEqual(model.current?.id, second.id); XCTAssertEqual(model.captures.count, 2)
+        XCTAssertTrue(model.error?.contains("unfinished") == true)
+    }
+    @MainActor func testOlderMacExplainsUpdateWithoutSendingUnsupportedMutation() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        var requests = 0
+        NativeTestProtocol.reply = { request in
+            requests += 1; XCTAssertEqual(request.httpMethod, "GET")
+            return (200, Data("{\"captures\":[]}".utf8))
+        }
+        await model.poll(); await model.startNewSession(); await model.previewCleanup()
+        XCTAssertEqual(requests, 1); XCTAssertFalse(model.supportsSessions)
+        XCTAssertTrue(model.error?.contains("Update the Mac companion") == true)
+    }
+    @MainActor func testSessionChangesWaitForClipboardAcknowledgement() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let screenshot = capture("a", time: 1), png = samplePNG()
+        var receiptID = "", resets = 0
+        NativeTestProtocol.reply = { request in
+            switch request.url!.path {
+            case "/api/library": return (200, try self.libraryData([screenshot]))
+            case "/api/save":
+                receiptID = try XCTUnwrap(request.value(forHTTPHeaderField: "X-Submission-ID"))
+                return (200, try JSONSerialization.data(withJSONObject: ["id": receiptID, "filename": "finished.png"]))
+            case "/api/status": return (200, try JSONSerialization.data(withJSONObject: ["lastCopied": receiptID]))
+            case "/api/session/reset": resets += 1; return (200, try self.libraryData([], session: "session-two"))
+            default: return (200, png)
+            }
+        }
+        await model.poll(); await model.finish()
+        XCTAssertNil(model.current)
+        XCTAssertTrue(model.sessionActionIssue?.contains("clipboard") == true)
+        await model.startNewSession(); XCTAssertEqual(resets, 0)
+        await model.poll()
+        XCTAssertNil(model.sessionActionIssue)
+        await model.startNewSession(); XCTAssertEqual(resets, 1)
+    }
+    @MainActor func testCleanupConflictRequiresFreshPreviewAndPreservesLocalCache() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let old = capture("a", time: 1, saved: true), png = samplePNG()
+        let store = try DraftStore(namespace: try XCTUnwrap(model.connection).namespace, root: root)
+        try store.store(old, image: png)
+        try store.write(DraftMetadata(capture: old, dirty: false), drawing: PKDrawing())
+        let currentButOutsideVisiblePage = capture("b", time: 2, saved: true)
+        try store.store(currentButOutsideVisiblePage, image: png)
+        try store.write(DraftMetadata(capture: currentButOutsideVisiblePage, dirty: false), drawing: PKDrawing())
+        var cleanups = 0
+        NativeTestProtocol.reply = { request in
+            if request.url!.path == "/api/library" { return (200, try self.libraryData([])) }
+            XCTAssertEqual(request.url!.path, "/api/library/cleanup")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer unit-test-navigation")
+            if request.httpMethod == "GET" {
+                return (200, Data("{\"token\":\"snapshot-1\",\"captureCount\":1,\"fileCount\":2,\"byteCount\":1234}".utf8))
+            }
+            XCTAssertEqual(try JSONDecoder().decode([String: String].self, from: self.requestBody(request)), ["token": "snapshot-1"])
+            cleanups += 1
+            return cleanups == 1 ? (409, Data("{\"error\":\"The library changed.\"}".utf8)) : (200, try JSONSerialization.data(withJSONObject: ["movedFiles": 2, "movedBytes": 1234, "movedCaptureIDs": [old.id]]))
+        }
+        await model.poll(); await model.previewCleanup()
+        XCTAssertEqual(model.cleanupPreview?.fileCount, 2)
+        await model.trashPreviousSessions()
+        XCTAssertNil(model.cleanupPreview); XCTAssertNotNil(store.image(old.id)); XCTAssertNotNil(model.error)
+        await model.trashPreviousSessions(); XCTAssertEqual(cleanups, 1, "A failed snapshot cannot be reused blindly")
+        await model.previewCleanup(); await model.trashPreviousSessions()
+        XCTAssertEqual(cleanups, 2); XCTAssertNil(store.image(old.id)); XCTAssertNil(store.draft(old.id))
+        XCTAssertNotNil(store.image(currentButOutsideVisiblePage.id), "Cleanup may prune only capture IDs actually removed by the Mac, never infer deletion from the 100-item library page")
+        XCTAssertTrue(model.sessionNotice?.contains("Moved 2") == true)
+    }
+    @MainActor func testExternalResetPreservesMissingSourceDraftAndAllowsExplicitDiscard() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let old = capture("a", time: 1, saved: true), next = capture("b", time: 2, saved: true), png = samplePNG()
+        var changed = false
+        NativeTestProtocol.reply = { request in
+            if request.url!.path == "/api/library" { return (200, try self.libraryData(changed ? [next] : [old], session: changed ? "session-two" : "session-one")) }
+            if changed && request.url!.path.hasSuffix(old.id) { return (404, Data()) }
+            return (200, png)
+        }
+        await model.poll(); await model.open(old)
+        model.drawingChanged(PKDrawing(), selectionID: model.selection); model.persist()
+        changed = true; await model.poll()
+        XCTAssertEqual(model.current?.id, old.id); XCTAssertTrue(model.dirty)
+        await model.open(next); model.browse()
+        XCTAssertTrue(model.browser?.captures.contains(old) == true, "An orphaned unfinished drawing must remain reachable")
+        let restored = await model.open(old)
+        XCTAssertTrue(restored); XCTAssertTrue(model.dirty); XCTAssertTrue(model.status.contains("Local draft restored"))
+        XCTAssertTrue(model.discardDrawing(old)); XCTAssertFalse(model.dirty); XCTAssertEqual(model.unfinishedDrawingCount, 0)
+        let store = try DraftStore(namespace: try XCTUnwrap(model.connection).namespace, root: root)
+        XCTAssertNotNil(store.image(old.id), "Discard removes drawing only, not the cached source")
+        XCTAssertNil(store.pending(old.id)); XCTAssertNil(model.sessionActionIssue)
+    }
+    private func requestBody(_ request: URLRequest) throws -> Data {
+        if let body = request.httpBody { return body }
+        guard let stream = request.httpBodyStream else { return Data() }
+        stream.open(); defer { stream.close() }
+        var data = Data(), buffer = [UInt8](repeating: 0, count: 4096)
+        while stream.hasBytesAvailable {
+            let count = stream.read(&buffer, maxLength: buffer.count)
+            if count < 0 { throw stream.streamError ?? AppError.message("Unreadable request body") }
+            if count == 0 { break }
+            data.append(buffer, count: count)
+        }
+        return data
+    }
     func testPairingAcceptsOnlyTheLocalMacLinkAndRemovesTokenFromBaseAddress() throws {
         let value=try Connection.parse("http://192.168.68.57:8765/#pair=unit-test-pairing-key")
         XCTAssertEqual(value.baseURL.absoluteString,"http://192.168.68.57:8765");XCTAssertNil(value.baseURL.fragment)

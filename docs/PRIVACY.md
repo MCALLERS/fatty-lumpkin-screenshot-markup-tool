@@ -1,6 +1,6 @@
 # Privacy policy
 
-Effective 27 October 2026. Applies to Fatty Lumpkin Screenshot Markup Tool, including the iPad app listed as Fatty Lumpkin Screenshot Tool.
+Effective 28 October 2026. Applies to Fatty Lumpkin Screenshot Markup Tool, including the iPad app listed as Fatty Lumpkin Screenshot Tool.
 
 ## What the app does
 
@@ -8,12 +8,12 @@ The Mac companion reads screenshots from a local folder and transfers selected i
 
 ## Stored on your devices
 
-- **Mac:** originals and annotated images are in Documents/Screenshot Tool. Pairing keys, completion receipts, capture identifiers, and screenshot-settings backups are in Library/Application Support/Screenshot Tool.
+- **Mac:** originals and annotated images are in Documents/Screenshot Tool. Pairing keys, completion receipts, capture identifiers, session boundaries, and screenshot-settings backups are in Library/Application Support/Screenshot Tool.
 - **Native iPad:** pairing credentials are stored in Keychain. Draft drawings, cached screenshots, and pending exports are in the app’s local container, excluded from backup where configured by the app. Keychain entries can persist after app removal, depending on iPadOS behavior.
 - **Safari:** pairing cookies and local draft/queue state are stored in Safari website data.
 - **Clipboard:** the last completed image and its local file URL are copied on the Mac. System clipboard features and other apps may read or synchronize this content under your device settings.
 
-Files are not automatically deleted from the Mac. Remove them in Finder when you no longer need them. Deleting the iPad app removes its local app data; clear Safari website data to remove browser drafts and pairing. Removing a file from a synced Documents folder also follows your sync provider’s behavior.
+Files are not automatically deleted from the Mac. Starting a new session resets the visible queue without deleting files. After a separate preview and confirmation, the native iPad app can ask the Mac companion to move previous-session PNGs to the Mac’s Trash. The current session is retained; files in Trash can be moved back through Finder. Local iPad drafts and cached copies are retained after Mac cleanup. You can also manage the files directly in Finder. Deleting the iPad app removes its local app data; clear Safari website data to remove browser drafts and pairing. Removing a file from a synced Documents folder also follows your sync provider’s behavior.
 
 ## Network and permissions
 
@@ -23,7 +23,7 @@ Camera access is used to scan the Mac’s pairing QR code. Local Network access 
 
 ## Third parties
 
-The app does not send screenshots to an AI provider. You choose when and where to paste or upload them. Those services’ policies apply after you share. iCloud Drive or another backup/sync service may independently copy the Documents folder if enabled. Apple may collect TestFlight diagnostics and tester feedback under its own policies. GitHub hosts downloads, source, and public issue reports under its policies.
+The app does not send screenshots to an AI provider. You choose when and where to paste or upload them. Those services’ policies apply after you share. iCloud Drive or another backup/sync service may independently copy the Documents folder if enabled. Apple may collect TestFlight diagnostics and tester feedback under its own policies. GitHub hosts downloads, source, and public issue reports under its policies. Cloudflare hosts the public information website; it does not receive screenshots from the app.
 
 ## Contact
 

@@ -102,3 +102,26 @@ test('finishing a queue clears the image but preserves saved drafts and library 
   assert.equal(resumed.run('state.capture'),null);
   captures.unshift({id:'new',modified:5,width:1200,height:800});await resumed.run('refresh()');assert.equal(resumed.run('state.capture.id'),'new');
 });
+
+test('a session reset clears a clean old screenshot and starts the next batch at one',async()=>{
+  const d=drawing();d.run(batch);await d.run('load(waiting()[0])');
+  let captures=JSON.parse(d.run('JSON.stringify(state.captures)')),session='old-session';
+  d.sandbox.fetch=async()=>({ok:true,json:async()=>({captures,session:{id:session}})});
+  await d.run('refresh()');
+  session='new-session';captures=[];await d.run('refresh()');
+  assert.equal(d.run('state.capture'),null);assert.equal(d.run('state.queue.length'),0);
+  assert.equal(d.elements.get('#paper').hidden,true);assert.equal(d.elements.get('#complete').hidden,true);
+  captures=[{id:'new',modified:5,width:1200,height:800}];await d.run('refresh()');
+  assert.equal(d.run('state.capture.id'),'new');assert.equal(d.elements.get('#queue-position').textContent,'1 of 1');
+});
+test('an external session reset preserves unfinished Pencil ink for saving',async()=>{
+  const d=drawing();d.run(batch);await d.run('load(waiting()[0])');
+  let captures=JSON.parse(d.run('JSON.stringify(state.captures)')),session='old-session';
+  d.sandbox.fetch=async()=>({ok:true,json:async()=>({captures,session:{id:session}})});
+  await d.run('refresh()');d.fire('pointerdown',1,'pen');d.fire('pointerup',1,'pen');
+  session='new-session';captures=[];await d.run('refresh()');
+  assert.equal(d.run('state.capture.id'),'first');assert.equal(d.run('state.strokes.length'),1);assert.equal(d.run('state.dirty'),true);
+  assert.match(d.elements.get('#status').textContent,/new session/i);
+  assert.equal(JSON.parse(d.storage.get('screenshot-draft-first')).strokes.length,1);
+  await d.run("saved({id:'historical-save'})");assert.equal(d.run('state.capture'),null);
+});

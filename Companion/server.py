@@ -11,6 +11,7 @@ from pathlib import Path
 import re
 import secrets
 import signal
+import stat
 import struct
 import subprocess
 import threading
@@ -22,6 +23,10 @@ import zlib
 MAX_BODY = 40 * 1024 * 1024
 ID = re.compile(r"^[a-f0-9]{24}$")
 REQUEST_ID = re.compile(r"^[a-f0-9-]{36}$")
+SESSION_REQUEST_ID = re.compile(r"^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$", re.IGNORECASE)
+
+class StalePreview(ValueError):
+    pass
 
 def atomic_json(path, value):
     temp = path.with_suffix('.tmp')
@@ -72,8 +77,21 @@ class Store:
                 os.chmod(token_path, 0o600)
             token = token_path.read_text().strip()
         self.token = token
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
+        self.trash = Path.home() / '.Trash'
+        self.cleanup_previews = {}
         self.last_seen = 0
+        session_path = self.state / 'sessions.json'
+        if session_path.exists():
+            # Do not silently forget previous-session boundaries if state is damaged.
+            session_state = json.loads(session_path.read_text())
+            self.session = session_state['session']
+            self.archived = set(session_state['archived'])
+            self.reset_receipts = session_state['resets']
+        else:
+            self.session = dict(id=secrets.token_hex(16), startedAt=time.time())
+            self.archived, self.reset_receipts = set(), {}
+            self.persist_sessions()
         try:
             self.capture_ids = json.loads((self.state / 'capture-identities.json').read_text())
         except (OSError, ValueError):
@@ -87,31 +105,145 @@ class Store:
             except (OSError, ValueError, TypeError):
                 continue
 
-    def captures(self):
-        captures = []
-        folders = [self.library / 'Inbox']
-        # The existing Pencil test is available until the first real capture.
-        if not any(folders[0].glob('*.png')):
-            folders.append(self.library / 'Annotated')
-        for folder in folders:
+    def persist_sessions(self):
+        atomic_json(self.state / 'sessions.json', dict(session=self.session, archived=sorted(self.archived), resets=self.reset_receipts))
+
+    def safe_folder(self, folder):
+        return not self.library.is_symlink() and not folder.is_symlink() and folder.is_dir()
+
+    def files(self, folders=('Inbox', 'Annotated', 'Ready')):
+        """All top-level PNGs, including captures outside the UI's hundred-image window."""
+        files = []
+        for name in folders:
+            folder = self.library / name
+            if not self.safe_folder(folder):
+                continue
             for path in folder.glob('*.png'):
                 try:
-                    if path.is_symlink() or not path.is_file():
+                    info = path.lstat()
+                    if not stat.S_ISREG(info.st_mode):
                         continue
-                    stat = path.stat()
-                    if time.time() - stat.st_mtime < .7 or stat.st_size > MAX_BODY:
-                        continue
-                    with path.open('rb') as handle:
-                        w, h = png_size(handle.read(33))
-                    identity = str(path.relative_to(self.library)) + '|' + str(stat.st_mtime_ns) + '|' + str(stat.st_ino)
-                    key = self.capture_ids.get(identity) or hashlib.sha256(identity.encode()).hexdigest()[:24]
-                    captures.append(dict(id=key, title=path.stem, width=w, height=h, modified=stat.st_mtime, saved=key in self.completed, path=path))
-                except (OSError, ValueError):
+                    relative = str(path.relative_to(self.library))
+                    identity = relative + '|' + str(info.st_mtime_ns) + '|' + str(info.st_ino)
+                    # Size and change time also guard cleanup against in-place changes.
+                    signature = (identity, info.st_size, info.st_ctime_ns, info.st_dev)
+                    files.append(dict(path=path, relative=relative, identity=identity, signature=signature, size=info.st_size, modified=info.st_mtime))
+                except OSError:
                     continue
-        return sorted(captures, key=lambda x: x['modified'], reverse=True)[:100]
+        return files
+
+    def captures(self, historical=False):
+        with self.lock:
+            return self._captures(historical)
+
+    def _captures(self, historical=False):
+        captures = []
+        files = self.files(('Inbox',))
+        # The existing Pencil test is available until the first real capture.
+        if not files or historical:
+            files += self.files(('Annotated',))
+        for item in files:
+            path, identity = item['path'], item['identity']
+            try:
+                if (not historical and identity in self.archived) or time.time() - item['modified'] < .7 or item['size'] > MAX_BODY:
+                    continue
+                with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW), 'rb') as handle:
+                    w, h = png_size(handle.read(33))
+                key = self.capture_ids.get(identity) or hashlib.sha256(identity.encode()).hexdigest()[:24]
+                captures.append(dict(id=key, title=path.stem, width=w, height=h, modified=item['modified'], saved=key in self.completed, path=path))
+            except (OSError, ValueError):
+                continue
+        captures.sort(key=lambda x: x['modified'], reverse=True)
+        return captures if historical else captures[:100]
+
+    def library_response(self):
+        with self.lock:
+            return dict(captures=[{k: v for k, v in item.items() if k != 'path'} for item in self.captures()], session=self.session, supportsSessions=True)
+
+    def reset_session(self, request_id):
+        if not isinstance(request_id, str) or not SESSION_REQUEST_ID.fullmatch(request_id):
+            raise ValueError('Invalid session request.')
+        with self.lock:
+            if request_id in self.reset_receipts:
+                return self.reset_receipts[request_id]
+            archived = self.archived | {item['identity'] for item in self.files()}
+            session = dict(id=secrets.token_hex(16), startedAt=time.time())
+            result = dict(session=session, captures=[], supportsSessions=True)
+            # Persist the boundary and retry receipt together before publishing either.
+            atomic_json(self.state / 'sessions.json', dict(session=session, archived=sorted(archived), resets={**self.reset_receipts, request_id: result}))
+            self.session, self.archived = session, archived
+            self.reset_receipts[request_id] = result
+            return result
+
+    def previous_files(self):
+        return [item for item in self.files() if item['identity'] in self.archived]
+
+    def cleanup_preview(self):
+        with self.lock:
+            now = time.time()
+            self.cleanup_previews = {key: item for key, item in self.cleanup_previews.items() if item['expires'] > now}
+            # Bound an authenticated client's outstanding confirmations.
+            if len(self.cleanup_previews) >= 32:
+                self.cleanup_previews.pop(next(iter(self.cleanup_previews)))
+            files = self.previous_files()
+            token = secrets.token_urlsafe(32)
+            self.cleanup_previews[token] = dict(files=files, expires=now+300)
+            return dict(token=token, captureCount=sum(not item['relative'].startswith('Ready/') for item in files), fileCount=len(files), byteCount=sum(item['size'] for item in files))
+
+    def cleanup(self, token):
+        with self.lock:
+            preview = self.cleanup_previews.get(token) if isinstance(token, str) else None
+            if not preview or preview['expires'] < time.time():
+                raise StalePreview('This cleanup preview expired. Review the previous sessions again.')
+            if 'result' in preview:
+                return preview['result']
+            files = self.previous_files()
+            expected = sorted(item['signature'] for item in preview['files'])
+            if sorted(item['signature'] for item in files) != expected:
+                raise StalePreview('The previous sessions changed. Review the updated file count before moving them to Trash.')
+            moved = []
+            if files:
+                if self.trash.is_symlink():
+                    raise ValueError('The Mac Trash folder is unavailable. Manage older screenshots in Finder instead.')
+                self.trash.mkdir(mode=0o700, exist_ok=True)
+                batch = self.trash / ('Fatty Lumpkin ' + time.strftime('%Y-%m-%d %H.%M.%S') + ' ' + secrets.token_hex(6))
+                batch.mkdir(mode=0o700)
+                try:
+                    for item in files:
+                        destination = batch / item['relative']
+                        destination.parent.mkdir(mode=0o700, exist_ok=True)
+                        # rename is atomic and never permanently deletes the original.
+                        # Libraries on another volume remain untouched on EXDEV.
+                        item['path'].rename(destination)
+                        moved.append((item, destination))
+                except OSError as error:
+                    # Roll back a partially moved batch where possible; never overwrite
+                    # files newly created by the screenshot service or by the user.
+                    for item, destination in reversed(moved):
+                        try:
+                            if not item['path'].exists():
+                                destination.rename(item['path'])
+                        except OSError:
+                            pass  # Any remainder is safely recoverable in Mac Trash.
+                    raise ValueError('The Mac could not finish moving these files to Trash. Check Finder and review the library again.') from error
+            result = dict(movedFiles=len(files), movedBytes=sum(item['size'] for item in files))
+            preview['result'] = result
+            return result
 
     def find(self, key):
-        return next((x for x in self.captures() if x['id'] == key), None)
+        # An in-progress drawing on another client survives a session reset.
+        return next((x for x in self.captures(historical=True) if x['id'] == key), None)
+
+    def image(self, key):
+        with self.lock:
+            item = self.find(key)
+            if item:
+                try:
+                    with os.fdopen(os.open(item['path'], os.O_RDONLY | os.O_NOFOLLOW), 'rb') as handle:
+                        return handle.read(MAX_BODY + 1)
+                except OSError:
+                    pass
+            return None
 
     def save(self, key, request_id, data):
         if not ID.fullmatch(key or '') or not REQUEST_ID.fullmatch(request_id or ''):
@@ -130,6 +262,8 @@ class Store:
             if png_size(data, complete=True) != (source['width'], source['height']):
                 raise ValueError('The image dimensions changed. Please try again.')
             filename = time.strftime('%Y-%m-%d %H.%M.%S') + ' — annotated ' + request_id[:8] + '.png'
+            if not self.safe_folder(self.library / 'Ready'):
+                raise ValueError('The Ready folder is unavailable. Check the screenshot library on your Mac.')
             destination = self.library / 'Ready' / filename
             temp = destination.with_suffix('.upload')
             temp.write_bytes(data)
@@ -138,6 +272,10 @@ class Store:
             atomic_json(receipt, result)
             atomic_json(self.state / 'last-completion.json', result)
             self.completed.add(key)
+            source_identity = next((item['identity'] for item in self.files() if item['path'] == source['path']), None)
+            if source_identity in self.archived:
+                self.archived.update(item['identity'] for item in self.files(('Ready',)) if item['path'] == destination)
+                self.persist_sessions()
             return result
 
 class Server(ThreadingHTTPServer):
@@ -205,8 +343,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.response(401, {'error': 'Pair this iPad using the QR code in Screenshot Tool on your Mac.'})
         if path == '/api/library':
             self.store.last_seen = time.time()
-            captures = [{k: v for k, v in item.items() if k != 'path'} for item in self.store.captures()]
-            return self.response(200, {'captures': captures})
+            return self.response(200, self.store.library_response())
+        if path == '/api/library/cleanup':
+            return self.response(200, self.store.cleanup_preview())
         if path == '/api/status':
             try:
                 copied = json.loads((self.store.state / 'clipboard-ack.json').read_text()).get('id')
@@ -214,9 +353,9 @@ class Handler(BaseHTTPRequestHandler):
                 copied = None
             return self.response(200, {'lastSeen': self.store.last_seen, 'lastCopied': copied})
         if path.startswith('/api/image/') and ID.fullmatch(path.rsplit('/', 1)[-1]):
-            item = self.store.find(path.rsplit('/', 1)[-1])
-            if item:
-                return self.response(200, item['path'].read_bytes(), 'image/png')
+            data = self.store.image(path.rsplit('/', 1)[-1])
+            if data:
+                return self.response(200, data, 'image/png')
         self.response(404, {'error': 'Image not found.'})
 
     def do_POST(self):
@@ -231,6 +370,25 @@ class Handler(BaseHTTPRequestHandler):
             return self.response(413, {'error': 'The image is too large. Capture a smaller area.'})
         if not self.authorized():
             return self.response(401, {'error': 'This iPad needs to be paired again.'})
+        if path in ('/api/session/reset', '/api/library/cleanup'):
+            if length > 1024:
+                return self.response(400, {'error': 'Invalid library request.'})
+            try:
+                data = self.rfile.read(length)
+                if len(data) != length:
+                    raise ValueError('The request was interrupted. Try again.')
+                payload = json.loads(data)
+                field = 'requestID' if path == '/api/session/reset' else 'token'
+                if not isinstance(payload, dict) or set(payload) != {field}:
+                    raise ValueError('Invalid library request.')
+                result = self.store.reset_session(payload[field]) if field == 'requestID' else self.store.cleanup(payload[field])
+                return self.response(200, result)
+            except StalePreview as error:
+                return self.response(409, {'error': str(error)})
+            except (ValueError, UnicodeError) as error:
+                return self.response(400, {'error': str(error)})
+            except OSError:
+                return self.response(400, {'error': 'The Mac could not update the library. Check file permissions and available storage.'})
         if path == '/api/pair':
             if length > 128:
                 return self.response(400, {'error': 'Invalid pairing request.'})

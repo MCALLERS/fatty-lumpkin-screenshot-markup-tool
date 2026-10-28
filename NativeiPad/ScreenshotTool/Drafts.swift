@@ -6,7 +6,12 @@ struct DraftMetadata: Codable {
     var dirty: Bool
     var submission: String?
 }
-struct SessionMetadata: Codable { var queue: CaptureQueue; var currentID: String? }
+struct SessionMetadata: Codable {
+    var queue: CaptureQueue
+    var currentID: String?
+    var librarySessionID: String? = nil
+    var pendingResetID: String? = nil
+}
 final class DraftStore {
     let folder: URL
     init(namespace: String, root: URL? = nil) throws {
@@ -18,7 +23,8 @@ final class DraftStore {
     func url(_ id: String, _ ext: String) -> URL { folder.appendingPathComponent(id).appendingPathExtension(ext) }
     func put(_ data: Data, at url: URL) throws { try data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]) }
     func store(_ capture: Capture, image: Data) throws { try put(image, at: url(capture.id, "png")) }
-    func image(_ id: String) -> UIImage? { (try? Data(contentsOf: url(id, "png"))).flatMap(UIImage.init(data:)) }
+    func imageData(_ id: String) -> Data? { try? Data(contentsOf: url(id, "png")) }
+    func image(_ id: String) -> UIImage? { imageData(id).flatMap(UIImage.init(data:)) }
     func write(_ draft: DraftMetadata, drawing: PKDrawing) throws {
         try put(drawing.dataRepresentation(), at: url(draft.capture.id, "drawing"))
         try put(JSONEncoder().encode(draft), at: url(draft.capture.id, "json"))
@@ -29,6 +35,30 @@ final class DraftStore {
     func session(_ value: SessionMetadata) throws { try put(JSONEncoder().encode(value), at: folder.appendingPathComponent("session.json")) }
     func pending(_ id: String) -> Data? { try? Data(contentsOf: url(id, "upload")) }
     func pending(_ data: Data, id: String) throws { try put(data, at: url(id, "upload")) }
+    func discardDrawing(_ capture: Capture) throws {
+        try write(DraftMetadata(capture: capture, dirty: false, submission: nil), drawing: PKDrawing())
+        let upload = url(capture.id, "upload")
+        if FileManager.default.fileExists(atPath: upload.path) { try FileManager.default.removeItem(at: upload) }
+    }
+    func unfinishedIDs() -> Set<String> {
+        let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
+        return Set(files.filter { $0.pathExtension == "json" }.compactMap { file in
+            let id = file.deletingPathExtension().lastPathComponent
+            guard let value = draft(id), value.dirty || value.submission != nil else { return nil }
+            return id
+        })
+    }
+    func removeCleanDrafts(ids: Set<String>) throws {
+        let files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
+        for file in files where file.pathExtension == "json" && file.lastPathComponent != "session.json" {
+            let id = file.deletingPathExtension().lastPathComponent
+            guard ids.contains(id), let value = draft(id), !value.dirty, value.submission == nil else { continue }
+            for ext in ["png", "drawing", "upload", "json"] {
+                let path = url(id, ext)
+                if FileManager.default.fileExists(atPath: path.path) { try FileManager.default.removeItem(at: path) }
+            }
+        }
+    }
 }
 
 enum ImageExporter {

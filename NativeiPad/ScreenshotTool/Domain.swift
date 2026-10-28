@@ -13,7 +13,20 @@ struct Capture: Codable, Identifiable, Equatable {
     }
     var valid: Bool { id.count == 24 && id.allSatisfy { $0.isHexDigit } && width > 0 && height > 0 && width <= 16000 && height <= 16000 && width * height <= 16000000 }
 }
-struct LibraryResponse: Decodable { let captures: [Capture] }
+struct LibrarySession: Codable, Equatable { let id: String; let startedAt: Double }
+struct LibraryResponse: Decodable {
+    let captures: [Capture]
+    let session: LibrarySession?
+    let supportsSessions: Bool?
+}
+struct CleanupPreview: Decodable, Equatable {
+    let token: String
+    let captureCount: Int
+    let fileCount: Int
+    let byteCount: Int
+    var sizeDescription: String { ByteCountFormatter.string(fromByteCount: Int64(byteCount), countStyle: .file) }
+}
+struct CleanupReceipt: Decodable { let movedFiles: Int; let movedBytes: Int; let movedCaptureIDs: [String]? }
 struct MacStatus: Decodable { let lastCopied: String? }
 struct SaveReceipt: Decodable { let id: String; let filename: String }
 struct APIError: Decodable { let error: String }
