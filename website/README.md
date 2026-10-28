@@ -8,7 +8,7 @@ From this directory, run `python3 preview.py`, then open `http://127.0.0.1:8095`
 
 ## Mac release — 28 October 2026
 
-**Ludwig’s Annotated Screenshots 0.5.1** is published in [GitHub release v0.5.1-beta.1](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.1-beta.1), with asset `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`. A fresh download from the public URL passed the portable SHA-256 checksum, app and DMG signatures, stapled notarization tickets, Gatekeeper assessment, the Mac self-test, and the isolated companion-protocol checks. Its SHA-256 is `563cc48d601775babfc11b72369c11d05a701e6d24d2114256171beb9d22a901`.
+**Ludwig’s Annotated Screenshots 0.5.1** is published in [GitHub release v0.5.1-beta.1](https://github.com/MCALLERS/ludwigs-annotated-screenshots/releases/tag/v0.5.1-beta.1), with asset `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`. A fresh download from the public URL passed the portable SHA-256 checksum, app and DMG signatures, stapled notarization tickets, Gatekeeper assessment, the Mac self-test, and the isolated companion-protocol checks. Its SHA-256 is `563cc48d601775babfc11b72369c11d05a701e6d24d2114256171beb9d22a901`.
 
 All main calls to action lead to the one `#download` section. It offers the Mac DMG, three inline setup steps using Safari on iPad without TestFlight, the full setup guide, and the optional native iPad TestFlight invitation. The page distinguishes the currently approved iPad 0.4.0 (11) from renamed 0.5.1 (14), which is waiting for Apple review. Local build 15 has not been uploaded and is not advertised as a public download.
 

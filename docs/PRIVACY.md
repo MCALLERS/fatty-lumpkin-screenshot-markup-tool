@@ -27,4 +27,4 @@ The app does not send screenshots to an AI provider. You choose when and where t
 
 ## Contact
 
-For general privacy questions, open an issue at https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/issues without including private images or connection keys. For a security vulnerability, use the repository’s private vulnerability reporting feature.
+For general privacy questions, open an issue at https://github.com/MCALLERS/ludwigs-annotated-screenshots/issues without including private images or connection keys. For a security vulnerability, use the repository’s private vulnerability reporting feature.

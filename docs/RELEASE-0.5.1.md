@@ -2,7 +2,7 @@
 
 Fatty Lumpkin is now **Ludwig's Annotated Screenshots**. The Mac app, native iPad app, Safari companion, menus, pairing instructions, and icons use the new name and the approved screenshot-and-pencil mark.
 
-The Mac release is published at [GitHub tag **`v0.5.1-beta.1`**](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.1-beta.1), with asset **`Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`**. A fresh public download has been fully verified. The [website](https://screenshot.bombadillo-ai.com) is the front door configured for Mac 0.5.1; verification of its latest deployment remains separate and pending.
+The Mac release is published at [GitHub tag **`v0.5.1-beta.1`**](https://github.com/MCALLERS/ludwigs-annotated-screenshots/releases/tag/v0.5.1-beta.1), with asset **`Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`**. A fresh public download has been fully verified. The [website](https://screenshot.bombadillo-ai.com) is the front door configured for Mac 0.5.1; the Ludwig website deployment succeeded and its public page matched the prepared source on 28 October 2026.
 
 This is a branding release. The Mac and iPad bundle identifiers, screenshot library, app state, Keychain pairing service, drafts, and transfer protocol remain unchanged. The internal Mac helper executable retains its original name, and `/pony.png` remains an alias for the new mark so cached companion pages continue to load it.
 

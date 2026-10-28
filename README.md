@@ -6,7 +6,7 @@
 
 A small Mac companion and a native PencilKit iPad app that turn screenshots into clear visual feedback. Circle the awkward button, sketch a new layout, or write a note—then tap **Done**. Your marked-up PNG is saved on the Mac and copied to its clipboard.
 
-[Website](https://screenshot.bombadillo-ai.com) · [iPad TestFlight](https://testflight.apple.com/join/bFbsKKmV) · [Mac downloads](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases) · [Getting started](docs/GETTING-STARTED.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Privacy](docs/PRIVACY.md)
+[Website](https://screenshot.bombadillo-ai.com) · [iPad TestFlight](https://testflight.apple.com/join/bFbsKKmV) · [Mac downloads](https://github.com/MCALLERS/ludwigs-annotated-screenshots/releases) · [Getting started](docs/GETTING-STARTED.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Privacy](docs/PRIVACY.md)
 
 ## Availability
 
@@ -14,7 +14,7 @@ Start at the [website](https://screenshot.bombadillo-ai.com) for the workflow, M
 
 | Component | Current status |
 | --- | --- |
-| Mac 0.5.1 (14) | Published as [`v0.5.1-beta.1`](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.1-beta.1); freshly downloaded package verified. |
+| Mac 0.5.1 (14) | Published as [`v0.5.1-beta.1`](https://github.com/MCALLERS/ludwigs-annotated-screenshots/releases/tag/v0.5.1-beta.1); freshly downloaded package verified. |
 | Native iPad 0.4.0 (11) | Approved public TestFlight build, still showing the earlier Fatty Lumpkin branding. |
 | Native iPad 0.5.1 (14) | Renamed build assigned to Public Beta; **Waiting for Review**. |
 | Native iPad 0.5.1 (15) | Current repository source and local device build, including Ludwig artwork, quotes, and Clear queue; not uploaded to TestFlight. |

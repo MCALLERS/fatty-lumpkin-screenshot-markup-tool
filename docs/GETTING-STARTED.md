@@ -4,11 +4,11 @@
 
 Start at the [website](https://screenshot.bombadillo-ai.com) for the Mac download and iPad invitation. For the exact public builds, see [sharing the beta](SHARING-BETA.md).
 
-**0.5.1 publication status:** the renamed Mac package is published as [`v0.5.1-beta.1`](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.1-beta.1), and a fresh public download passed package verification. The website is the front door configured for Mac 0.5.1; its latest deployment has not yet been verified. Native iPad **0.4.0 (11)** is currently public, **0.5.1 (14)** is Waiting for Review, and **0.5.1 (15)** is a local build only.
+**0.5.1 publication status:** the renamed Mac package is published as [`v0.5.1-beta.1`](https://github.com/MCALLERS/ludwigs-annotated-screenshots/releases/tag/v0.5.1-beta.1), and a fresh public download passed package verification. The website is the front door configured for Mac 0.5.1; its latest deployment has not yet been verified. Native iPad **0.4.0 (11)** is currently public, **0.5.1 (14)** is Waiting for Review, and **0.5.1 (15)** is a local build only.
 
 ## Install on your Mac
 
-1. Follow **Download for Mac** on the [website](https://screenshot.bombadillo-ai.com), or open the verified [Mac 0.5.1 release](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.1-beta.1) directly. Download `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`. Earlier releases retain the Fatty Lumpkin name.
+1. Follow **Download for Mac** on the [website](https://screenshot.bombadillo-ai.com), or open the verified [Mac 0.5.1 release](https://github.com/MCALLERS/ludwigs-annotated-screenshots/releases/tag/v0.5.1-beta.1) directly. Download `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`. Earlier releases retain the Fatty Lumpkin name.
 2. Open it and drag **Ludwig's Annotated Screenshots.app** to **Applications**.
 3. Open the app from Applications. Keep it running while you annotate.
 4. Click **Set up screenshot folder** if it appears. This changes macOS screenshots to PNG and saves them in **Documents → Screenshot Tool → Inbox**. It preserves the previous location, format, and HDR settings for restoration from the menu-bar app menu.

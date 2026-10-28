@@ -2,11 +2,11 @@
 
 Start at [Ludwig's Annotated Screenshots](https://screenshot.bombadillo-ai.com). Use that website as the front door for the workflow, Mac download, and iPad invitation.
 
-**Publication status — 28 October 2026:** the renamed Mac **0.5.1 (14)** package is published as [`v0.5.1-beta.1`](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.1-beta.1). A fresh public download passed checksum, signature, notarization-ticket, Gatekeeper, and packaged-runtime verification. The website is the front door configured for Mac 0.5.1; its latest deployment is not yet verified. Apple is separately reviewing iPad build 14.
+**Publication status — 28 October 2026:** the renamed Mac **0.5.1 (14)** package is published as [`v0.5.1-beta.1`](https://github.com/MCALLERS/ludwigs-annotated-screenshots/releases/tag/v0.5.1-beta.1). A fresh public download passed checksum, signature, notarization-ticket, Gatekeeper, and packaged-runtime verification. The website is the front door configured for Mac 0.5.1; the latest Ludwig deployment succeeded and the public page matched the prepared source. Apple is separately reviewing iPad build 14.
 
 ## 1. Install the Mac companion
 
-1. Follow **Download for Mac** on the [website](https://screenshot.bombadillo-ai.com), or open [Mac beta 0.5.1](https://github.com/MCALLERS/fatty-lumpkin-screenshot-markup-tool/releases/tag/v0.5.1-beta.1) directly. Download `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`.
+1. Follow **Download for Mac** on the [website](https://screenshot.bombadillo-ai.com), or open [Mac beta 0.5.1](https://github.com/MCALLERS/ludwigs-annotated-screenshots/releases/tag/v0.5.1-beta.1) directly. Download `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`.
 2. Open the DMG and drag **Ludwig's Annotated Screenshots.app** into **Applications**. When upgrading, quit the old companion first and keep only one copy running. Earlier downloads use the Fatty Lumpkin name.
 3. Open the app and click **Set up screenshot folder** if it appears. Allow Documents and Local Network access if asked. Keep the app running while you annotate.
 
