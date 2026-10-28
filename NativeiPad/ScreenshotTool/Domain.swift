@@ -8,6 +8,9 @@ struct Capture: Codable, Identifiable, Equatable {
     let height: Int
     let modified: Double
     var saved: Bool
+    static func oldestFirst(_ lhs: Capture, _ rhs: Capture) -> Bool {
+        lhs.modified == rhs.modified ? lhs.id < rhs.id : lhs.modified < rhs.modified
+    }
     var valid: Bool { id.count == 24 && id.allSatisfy { $0.isHexDigit } && width > 0 && height > 0 && width <= 16000 && height <= 16000 && width * height <= 16000000 }
 }
 struct LibraryResponse: Decodable { let captures: [Capture] }
@@ -60,4 +63,12 @@ struct CaptureQueue: Codable {
         return ids.compactMap { all[$0] }.filter { !$0.saved && !locallySaved.contains($0.id) }
     }
     func position(_ id: String) -> String { ids.firstIndex(of: id).map { "\($0 + 1) of \(ids.count)" } ?? "Previous screenshot" }
+}
+
+// A browsing session has fixed rows: polling can update the queue without moving this list.
+struct CaptureBrowserSnapshot: Identifiable {
+    let id = UUID()
+    let captures: [Capture]
+    let selectedID: String?
+    let draftIDs: Set<String>
 }

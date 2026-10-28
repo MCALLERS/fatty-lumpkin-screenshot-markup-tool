@@ -31,12 +31,16 @@ import PencilKit
     private var manualSelection = false
     private var revision = 0
     private var draftTask: Task<Void, Never>?
-    private var loadingID: String?
+    @Published private(set) var loadingID: String?
+    @Published var browser: CaptureBrowserSnapshot?
+    private let configuration: URLSessionConfiguration
+    private let draftRoot: URL?
     private var acknowledgement: String?
     private var acknowledgementStarted: Date?
 
-    init() {
-        if let connection = ConnectionVault.read() { configure(connection) }
+    init(connection: Connection? = ConnectionVault.read(), configuration: URLSessionConfiguration = .ephemeral, draftRoot: URL? = nil) {
+        self.configuration = configuration; self.draftRoot = draftRoot
+        if let connection { configure(connection) }
         else { showPairing = true }
     }
     var next: Capture? { queue.pending(captures, locallySaved: locallySaved).first { $0.id != current?.id } }
@@ -44,11 +48,31 @@ import PencilKit
     var position: String { current.map { queue.position($0.id) } ?? "No pending screenshots" }
     var pending: [Capture] { queue.pending(captures, locallySaved: locallySaved) }
 
+    var orderedCaptures: [Capture] { captures.sorted(by: Capture.oldestFirst) }
+    var previousCapture: Capture? { neighbor(-1) }
+    var followingCapture: Capture? { neighbor(1) }
+    var navigationPosition: String {
+        let ordered = orderedCaptures
+        guard let id = current?.id, let index = ordered.firstIndex(where: { $0.id == id }) else { return "Screenshots (\(ordered.count))" }
+        return "\(index + 1) of \(ordered.count)"
+    }
+    private func neighbor(_ offset: Int) -> Capture? {
+        let ordered = orderedCaptures
+        guard let id = current?.id, let index = ordered.firstIndex(where: { $0.id == id }), ordered.indices.contains(index + offset) else { return nil }
+        return ordered[index + offset]
+    }
+    func browse() {
+        guard !busy, loadingID == nil else { return }
+        persist(); error = nil
+        browser = CaptureBrowserSnapshot(captures: orderedCaptures, selectedID: current?.id,
+            draftIDs: Set(captures.filter { drafts?.draft($0.id)?.dirty == true }.map(\.id)))
+    }
+
     private func configure(_ value: Connection) {
-        revision += 1; connection = value; client = MacClient(value); locallySaved = []
+        revision += 1; connection = value; client = MacClient(value, configuration: configuration); locallySaved = []; browser = nil
         current = nil; image = nil; drawing = PKDrawing(); dirty = false; acknowledgement = nil
         do {
-            drafts = try DraftStore(namespace: value.namespace)
+            drafts = try DraftStore(namespace: value.namespace, root: draftRoot)
             let session = drafts!.session(); queue = session.queue
             if let id = session.currentID, let draft = drafts?.draft(id), draft.dirty, let image = drafts?.image(id) {
                 current = draft.capture; self.image = image; drawing = drafts!.drawing(id); dirty = true; submission = draft.submission; selection = UUID()
@@ -79,12 +103,14 @@ import PencilKit
         let requestRevision = revision
         do {
             let list = try await client.library()
-            guard !busy, revision == requestRevision else { return }
-            captures = list.map { capture in var c = capture; if locallySaved.contains(c.id) { c.saved = true }; return c }
+            guard !busy, loadingID == nil, revision == requestRevision else { return }
+            let updated = list.map { capture in var c = capture; if locallySaved.contains(c.id) { c.saved = true }; return c }
+            // Do not rebuild controls for a library response that has not changed.
+            if captures != updated { captures = updated }
             queue.merge(captures, locallySaved: locallySaved); connected = true
-            if current == nil, let first = pending.first { await open(first, manual: false) }
+            if browser == nil, current == nil, let first = pending.first { await open(first, manual: false) }
             else if current == nil, completedMessage == nil { status = "Ready for your next screenshot." }
-            else if let current, !dirty, !manualSelection, current.saved, let first = pending.first { await open(first, manual: false) }
+            else if browser == nil, let current, !dirty, !manualSelection, current.saved, let first = pending.first { await open(first, manual: false) }
             persistSession()
             if let expected = acknowledgement {
                 let result = try await client.status()
@@ -102,28 +128,33 @@ import PencilKit
             status = current == nil ? "Mac unavailable. Keep Fatty Lumpkin open on the same network." : "Connection interrupted. Your drawing is kept on this iPad."
         }
     }
-    func open(_ capture: Capture, manual: Bool = true) async {
-        guard !busy, loadingID == nil else { return }
-        await load(capture, manual: manual)
+    @discardableResult func open(_ capture: Capture, manual: Bool = true) async -> Bool {
+        guard !busy, loadingID == nil else { return false }
+        if capture.id == current?.id { manualSelection = manual; return true }
+        revision += 1 // An older library request must not take over a manual selection.
+        return await load(capture, manual: manual)
     }
-    private func load(_ capture: Capture, manual: Bool) async {
-        guard let client, let drafts else { return }
-        persist(); loadingID = capture.id; defer { loadingID = nil }
+    @discardableResult private func load(_ capture: Capture, manual: Bool) async -> Bool {
+        guard let client, let drafts else { return false }
+        if let canvas, dirty { drawing = canvas.drawing }
+        persist(); loadingID = capture.id; error = nil; defer { loadingID = nil }
         let requestRevision = revision
         do {
             let bytes = try await client.image(capture)
-            guard requestRevision == revision else { return }
+            guard requestRevision == revision else { return false }
             guard let image = UIImage(data: bytes), image.cgImage?.width == capture.width, image.cgImage?.height == capture.height else { throw AppError.message("The screenshot could not be opened.") }
             try drafts.store(capture, image: bytes)
+            canvas = nil; fitCanvas = nil
             self.current = capture; self.image = image; drawing = drafts.drawing(capture.id)
             let prior = drafts.draft(capture.id); dirty = prior?.dirty ?? false; submission = prior?.submission
             manualSelection = manual; completedMessage = nil; acknowledgement = nil; selection = UUID()
             canUndo = false; canRedo = false; status = dirty ? "Your unfinished drawing is restored." : "Draw with Pencil. Use two fingers to move and zoom."
             persistSession()
-        } catch { self.error = friendly(error) }
+            return true
+        } catch { self.error = friendly(error); return false }
     }
     func drawingChanged(_ value: PKDrawing, selectionID: UUID) {
-        guard selection == selectionID, current != nil, !busy else { return }
+        guard selection == selectionID, current != nil, !busy, loadingID == nil else { return }
         drawing = value; dirty = true; submission = nil
         canUndo = canvas?.undoManager?.canUndo ?? false; canRedo = canvas?.undoManager?.canRedo ?? false
         draftTask?.cancel()

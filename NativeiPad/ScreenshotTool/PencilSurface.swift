@@ -10,7 +10,7 @@ struct PencilSurface: UIViewControllerRepresentable {
         controller.changed = { [weak model] drawing in model?.drawingChanged(drawing, selectionID: selection) }
         controller.configure(image: image, size: CGSize(width: capture.width, height: capture.height), drawing: model.drawing, selection: selection)
         controller.canvas.drawingPolicy = model.fingerDrawing ? .anyInput : .pencilOnly
-        controller.view.isUserInteractionEnabled = !model.busy
+        controller.view.isUserInteractionEnabled = !model.busy && model.loadingID == nil
         model.canvas = controller.canvas
         model.fitCanvas = { [weak controller] in controller?.fit() }
     }

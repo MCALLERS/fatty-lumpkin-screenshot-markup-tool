@@ -1,5 +1,6 @@
 import XCTest
 import PencilKit
+import Combine
 @testable import ScreenshotToolNative
 
 final class ScreenshotToolTests: XCTestCase {
@@ -11,6 +12,90 @@ final class ScreenshotToolTests: XCTestCase {
         XCTAssertEqual(queue.pending([third,old,second,first],locallySaved:[first.id]).map(\.id),[second.id,third.id])
         let fourth=capture("e",time:4);queue.merge([fourth,third,old,second,first],locallySaved:[first.id,second.id,third.id])
         XCTAssertEqual(queue.ids,[fourth.id])
+    }
+    @MainActor private func navigationFixture() throws -> (WorkspaceModel, URL) {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [NativeTestProtocol.self]
+        let connection = try Connection.parse("http://127.0.0.1:8765/#pair=unit-test-navigation")
+        return (WorkspaceModel(connection: connection, configuration: config, draftRoot: root), root)
+    }
+    @MainActor private func samplePNG() -> Data {
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1
+        return UIGraphicsImageRenderer(size: CGSize(width: 120, height: 80), format: format).image { context in
+            UIColor.white.setFill(); context.fill(CGRect(x: 0, y: 0, width: 120, height: 80))
+        }.pngData()!
+    }
+    @MainActor func testIdenticalPollingDoesNotRepublishTheScreenshotList() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let list = [capture("a", time: 1, saved: true)]
+        NativeTestProtocol.reply = { _ in (200, try JSONEncoder().encode(["captures": list])) }
+        var publications = 0
+        let subscription = model.$captures.dropFirst().sink { _ in publications += 1 }
+        await model.poll(); await model.poll(); await model.poll()
+        XCTAssertEqual(publications, 1, "An unchanged refresh must not rebuild the screenshot picker")
+        withExtendedLifetime(subscription) {}
+    }
+    @MainActor func testBrowserRowsStayFixedAndIncomingCapturesDoNotTakeOverWhileBrowsing() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let first = capture("a", time: 1, saved: true), second = capture("b", time: 2, saved: true), new = capture("c", time: 3)
+        var list = [second, first]
+        let png = samplePNG(); var imageRequests = 0
+        NativeTestProtocol.reply = { request in
+            if request.url!.path == "/api/library" { return (200, try JSONEncoder().encode(["captures": list])) }
+            imageRequests += 1; return (200, png)
+        }
+        await model.poll(); model.browse()
+        let sessionID = try XCTUnwrap(model.browser?.id)
+        XCTAssertEqual(model.browser?.captures.map(\.id), [first.id, second.id])
+        list = [new, second, first]
+        await model.poll(); await model.poll()
+        XCTAssertEqual(model.browser?.id, sessionID)
+        XCTAssertEqual(model.browser?.captures.map(\.id), [first.id, second.id])
+        XCTAssertNil(model.current); XCTAssertEqual(imageRequests, 0)
+        model.browser = nil
+        await model.poll()
+        XCTAssertEqual(model.current?.id, new.id)
+        model.browse()
+        XCTAssertEqual(model.browser?.captures.map(\.id), [first.id, second.id, new.id])
+    }
+    @MainActor func testPreviousNextPreserveInkAndManualSelectionAcrossRefreshes() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let first = capture("a", time: 1, saved: true), second = capture("b", time: 2, saved: true), new = capture("c", time: 3)
+        var list = [second, first]; let png = samplePNG()
+        NativeTestProtocol.reply = { request in request.url!.path == "/api/library" ? (200, try JSONEncoder().encode(["captures": list])) : (200, png) }
+        await model.poll()
+        let opened = await model.open(first); XCTAssertTrue(opened)
+        XCTAssertNil(model.previousCapture); XCTAssertEqual(model.followingCapture?.id, second.id)
+        let point = PKStrokePoint(location: CGPoint(x: 30, y: 30), timeOffset: 0, size: CGSize(width: 5, height: 5), opacity: 1, force: 1, azimuth: 0, altitude: .pi / 2)
+        let ink = PKDrawing(strokes: [PKStroke(ink: PKInk(.pen, color: .green), path: PKStrokePath(controlPoints: [point], creationDate: Date()))])
+        model.drawingChanged(ink, selectionID: model.selection)
+        await model.open(second)
+        XCTAssertEqual(model.previousCapture?.id, first.id); XCTAssertNil(model.followingCapture)
+        await model.open(first)
+        XCTAssertTrue(model.dirty); XCTAssertEqual(model.drawing.strokes.count, 1)
+        list = [new, second, first]
+        await model.poll(); await model.poll()
+        XCTAssertEqual(model.current?.id, first.id); XCTAssertEqual(model.navigationPosition, "1 of 3")
+        model.browse(); XCTAssertTrue(model.browser?.draftIDs.contains(first.id) == true)
+        model.persist()
+    }
+    @MainActor func testFailedBrowserSelectionKeepsTheCurrentScreenshotAndBrowser() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let first = capture("a", time: 1, saved: true), second = capture("b", time: 2, saved: true), png = samplePNG()
+        NativeTestProtocol.reply = { request in
+            if request.url!.path == "/api/library" { return (200, try JSONEncoder().encode(["captures": [second, first]])) }
+            if request.url!.path.hasSuffix(second.id) { return (500, Data()) }
+            return (200, png)
+        }
+        await model.poll(); await model.open(first); model.browse()
+        let selection = model.selection
+        let opened = await model.open(second)
+        XCTAssertFalse(opened); XCTAssertEqual(model.current?.id, first.id); XCTAssertEqual(model.selection, selection)
+        XCTAssertNotNil(model.browser); XCTAssertNotNil(model.error); XCTAssertNil(model.loadingID)
     }
     func testPairingAcceptsOnlyTheLocalMacLinkAndRemovesTokenFromBaseAddress() throws {
         let value=try Connection.parse("http://192.168.68.57:8765/#pair=unit-test-pairing-key")

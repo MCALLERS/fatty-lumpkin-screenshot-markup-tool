@@ -39,9 +39,18 @@ struct WorkspaceView: View {
             }.padding(20).foregroundStyle(.white).background(ink)
             HStack(spacing: 16) {
                 Text(model.position).font(.subheadline.weight(.semibold)).padding(.horizontal, 12).padding(.vertical, 8).background(lime.opacity(0.3), in: RoundedRectangle(cornerRadius: 8)).accessibilityIdentifier("queuePosition")
-                Menu {
-                    ForEach(model.captures) { capture in Button((capture.saved ? "✓ " : "") + capture.title) { Task { await model.open(capture) } } }
-                } label: { Label(model.current?.title ?? "Previous screenshots", systemImage: "chevron.down").lineLimit(1) }.disabled(model.captures.isEmpty || model.busy)
+                Button { model.browse() } label: { Label("Browse screenshots", systemImage: "square.grid.2x2").labelStyle(.titleAndIcon) }
+                    .disabled(model.captures.isEmpty || model.busy || model.loadingID != nil).accessibilityIdentifier("browseScreenshots")
+                Spacer()
+                Button { if let capture = model.previousCapture { Task { await model.open(capture) } } } label: { Image(systemName: "chevron.left").frame(minWidth: 44, minHeight: 44) }
+                    .disabled(model.previousCapture == nil || model.busy || model.loadingID != nil).accessibilityLabel("Previous screenshot").accessibilityIdentifier("previousScreenshot")
+                Text(model.navigationPosition).monospacedDigit().font(.subheadline)
+                Button { if let capture = model.followingCapture { Task { await model.open(capture) } } } label: { Image(systemName: "chevron.right").frame(minWidth: 44, minHeight: 44) }
+                    .disabled(model.followingCapture == nil || model.busy || model.loadingID != nil).accessibilityLabel("Next screenshot").accessibilityIdentifier("nextScreenshot")
+            }.font(.subheadline).padding(.horizontal, 20).padding(.vertical, 4).background(.white)
+            HStack(spacing: 16) {
+                if model.loadingID != nil { ProgressView("Opening…") }
+                else { Text(model.current?.title ?? "Choose a screenshot or capture a new one on your Mac.").lineLimit(1).truncationMode(.middle) }
                 Spacer()
                 if model.current != nil {
                     Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }.disabled(!model.canUndo || model.busy).accessibilityLabel("Undo")
@@ -66,13 +75,14 @@ struct WorkspaceView: View {
                 }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
             VStack(alignment: .leading, spacing: 8) {
-                HStack { Text(model.status).accessibilityIdentifier("status"); Spacer(); if let current = model.current { Text("\(current.width) × \(current.height)").monospacedDigit() }; Text("Beta 0.4.0") }
+                HStack { Text(model.status).accessibilityIdentifier("status"); Spacer(); if let current = model.current { Text("\(current.width) × \(current.height)").monospacedDigit() }; Text("Beta 0.4.1") }
                 Text("On your Mac: ⌃⌥⌘S opens finished screenshots · Keep Fatty Lumpkin running.")
                     .accessibilityLabel("On your Mac: Control Option Command S opens finished screenshots. Keep Fatty Lumpkin running.")
             }.font(.caption).foregroundStyle(.secondary).padding(14).frame(maxWidth: .infinity, alignment: .leading).background(.white)
         }.foregroundStyle(ink).preferredColorScheme(.light)
             .sheet(isPresented: $model.showPairing) { PairingView(model: model) }
-            .alert("Fatty Lumpkin", isPresented: Binding(get: { model.error != nil && !model.showPairing }, set: { if !$0 { model.error = nil } })) { Button("OK") { model.error = nil } } message: { Text(model.error ?? "") }
+            .sheet(item: $model.browser) { snapshot in CaptureBrowserView(model: model, snapshot: snapshot) }
+            .alert("Fatty Lumpkin", isPresented: Binding(get: { model.error != nil && !model.showPairing && model.browser == nil }, set: { if !$0 { model.error = nil } })) { Button("OK") { model.error = nil } } message: { Text(model.error ?? "") }
     }
 }
 struct PairingView: View {

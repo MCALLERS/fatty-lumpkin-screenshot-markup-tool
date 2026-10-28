@@ -35,6 +35,12 @@ Take screenshots consecutively. The iPad queues unfinished captures in chronolog
 
 The clipboard contains the most recently completed image. For the whole batch, press **Control–Option–Command–S** on Mac, select the finished PNGs in Finder, then drag them into your agent. Clipboard support for multiple files varies by agent.
 
+## Browse earlier screenshots (native iPad 0.4.1+)
+
+Tap **Browse screenshots** to open the screenshot browser. It lists captures oldest first, with search and **All / To do / Saved** filters. **Oldest** and **Newest** jump to either end. The list stays fixed while it is open; close and reopen it to include newly captured screenshots.
+
+Use the left and right arrows above the canvas to move through captures in chronological order. Unfinished Pencil drawings stay with each screenshot when you switch. **Done & Next** still saves to your Mac and advances through the unfinished queue; the navigation arrows simply open another screenshot without exporting it.
+
 ## Where everything lives
 
 In Finder’s sidebar, choose **Documents**, then **Screenshot Tool**:
