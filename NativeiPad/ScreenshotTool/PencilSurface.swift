@@ -10,7 +10,7 @@ struct PencilSurface: UIViewControllerRepresentable {
         controller.changed = { [weak model] drawing in model?.drawingChanged(drawing, selectionID: selection) }
         controller.configure(image: image, size: CGSize(width: capture.width, height: capture.height), drawing: model.drawing, selection: selection)
         controller.canvas.drawingPolicy = model.fingerDrawing ? .anyInput : .pencilOnly
-        controller.view.isUserInteractionEnabled = !model.busy && model.loadingID == nil
+        controller.setDrawingActive(!model.busy && model.loadingID == nil && model.browser == nil && !model.showPairing)
         model.canvas = controller.canvas
         model.fitCanvas = { [weak controller] in controller?.fit() }
     }
@@ -26,6 +26,7 @@ final class DrawingController: UIViewController, UIScrollViewDelegate, PKCanvasV
     private var needsFit = true
     private var settingDrawing = false
     private var lastSize = CGSize.zero
+    private var drawingActive = true
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,7 +43,18 @@ final class DrawingController: UIViewController, UIScrollViewDelegate, PKCanvasV
         sheet.addSubview(canvas); picker.addObserver(canvas)
         canvas.accessibilityLabel = "Pencil drawing surface"
     }
-    override func viewDidAppear(_ animated: Bool) { super.viewDidAppear(animated); picker.setVisible(true, forFirstResponder: canvas); canvas.becomeFirstResponder() }
+    override func viewDidAppear(_ animated: Bool) { super.viewDidAppear(animated); updateDrawingFocus() }
+    func setDrawingActive(_ active: Bool) {
+        loadViewIfNeeded()
+        view.isUserInteractionEnabled = active
+        guard drawingActive != active else { return }
+        drawingActive = active
+        if view.window != nil { updateDrawingFocus() }
+    }
+    private func updateDrawingFocus() {
+        picker.setVisible(drawingActive, forFirstResponder: canvas)
+        if drawingActive { canvas.becomeFirstResponder() } else { canvas.resignFirstResponder() }
+    }
     override func viewWillDisappear(_ animated: Bool) { super.viewWillDisappear(animated); picker.setVisible(false, forFirstResponder: canvas); canvas.resignFirstResponder() }
     func configure(image: UIImage, size: CGSize, drawing: PKDrawing, selection: UUID) {
         loadViewIfNeeded()
