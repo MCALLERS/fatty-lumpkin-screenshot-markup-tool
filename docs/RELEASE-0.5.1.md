@@ -2,9 +2,9 @@
 
 ## Current status — 28 October 2026
 
-- **Mac 0.5.1 (14):** published, signed, notarized, stapled, and verified from the public download. The existing Mac download and website are unchanged for the iPad text-note feature.
-- **Native iPad 0.5.1 (14):** **Approved** in the existing **Public Beta** TestFlight group. The earlier **0.5.0 (13)** build is also approved.
-- **Native iPad 0.5.1 (17):** local build and physical voice-note workflow validated; uploaded successfully to App Store Connect and processing. Public Beta assignment and beta review are not yet complete; tester availability is not confirmed.
+- **Mac 0.5.1 (14):** published, signed, notarized, stapled, and verified from the public download. The existing Mac package is unchanged. Website release and privacy instructions have been refreshed in source; verification of that website update after deployment is pending.
+- **Native iPad 0.5.1 (17):** **Approved** and available in the existing **Public Beta** TestFlight group. Local validation and the physical voice-note workflow passed. Automatic tester notification was enabled; the [public invitation](https://testflight.apple.com/join/bFbsKKmV) is unchanged.
+- Earlier native iPad builds **0.5.1 (14)** and **0.5.0 (13)** are also approved.
 - **Full App Store version 1.0:** **Prepare for Submission**. Beta approval does not make this a public App Store release.
 
 ## Branding release
@@ -43,10 +43,10 @@ The public Mac download was freshly downloaded and verified against SHA-256 `563
 ## iPad distribution and source boundary
 
 - **0.4.0 (11)** was the earlier public TestFlight build. It retains the older branding and lacks the later browser/session controls.
-- **0.5.1 (14)** is the approved renamed Public Beta build. It includes the existing session tools but not the later Ludwig portrait, quotation margin, or prominent Clear queue shortcut.
+- **0.5.1 (14)** is the earlier approved renamed Public Beta build. It includes the existing session tools but not the later Ludwig portrait, quotation margin, or prominent Clear queue shortcut.
 - **0.5.1 (15)** added the artwork, quotes, and safe Clear queue shortcut as a local development build. Its 21 behavioral native tests passed. See [historical build 15 notes](../NativeiPad/LOCAL-BUILD-15.md).
 - **0.5.1 (16)** fixed the previous/next arrows when the welcome screen has no selected capture. Its 24 native tests passed. See [historical build 16 notes](../NativeiPad/LOCAL-BUILD-16.md).
-- **0.5.1 (17)** is the current native source and locally installed build. It retains those improvements and adds the text/voice-note editor. See its validation and tester instructions below.
+- **0.5.1 (17)** is the current native source, locally installed build, and approved Public Beta release. It retains those improvements and adds the text/voice-note editor. See its validation and tester instructions below.
 
 The Mac build script and signed 0.5.1 artifact remain build **14**. The native project generator now produces build **17**, so this repository snapshot is not a reproduction of the approved iPad build 14. Mac publishing and website deployment do not change TestFlight availability.
 
@@ -58,7 +58,9 @@ Notes share undo/redo with Pencil and survive navigation and local draft recover
 
 **Validation:** 44 native simulator tests passed, covering note storage/rendering, legacy drafts, overflow rejection, export, navigation/restart recovery, add/edit/move/delete, undo/redo, retry identity, write failure, zoom/pan/rotation alignment, accessibility placement, and keyboard focus. After the final text-size selector adjustment, all five surface tests passed again. Release compatibility checks also passed: **17 Python companion tests** and **15 Safari tests**. The device archive succeeded and version **0.5.1 (17)** was installed over the existing app container. The user then confirmed a real dictated note plus Pencil marks exported and pasted into the Mac chat successfully. Other languages, offline Dictation, and disabled Dictation settings remain outside physical-device validation.
 
-**TestFlight status:** build **0.5.1 (17)** uploaded successfully to App Store Connect and is processing. Public Beta assignment and beta review are not yet complete; tester availability is not confirmed. Once TestFlight offers build 17, update the existing app and verify **Beta 0.5.1 (17)** in its footer. Follow the [voice-note steps](GETTING-STARTED.md#text-and-voice-notes-native-build-051-17), then confirm the finished PNG contains both text and ink. No Mac update is required. The Safari editor is unchanged. [Detailed build notes](../NativeiPad/LOCAL-BUILD-17.md).
+**TestFlight status:** build **0.5.1 (17)** uploaded successfully, was assigned to **Public Beta**, and was submitted for review with **Automatically notify testers** enabled. The final iOS Builds row was verified as **Approved / Public Beta**, with no pending **Notify Testers** action. It is available through the unchanged [public invitation](https://testflight.apple.com/join/bFbsKKmV). The beta description, review notes, and What to Test instructions were saved with voice-note steps and the renamed website/GitHub links.
+
+Update the existing app in TestFlight and verify **Beta 0.5.1 (17)** in its footer. Follow the [voice-note steps](GETTING-STARTED.md#text-and-voice-notes-native-build-051-17), then confirm the finished PNG contains both text and ink. No Mac update is required. The Safari editor is unchanged. [Detailed build notes](../NativeiPad/LOCAL-BUILD-17.md).
 
 ## Publication verification — 28 October 2026
 

@@ -1,10 +1,12 @@
 # iPad build 0.5.1 (17) — text and voice notes
 
-This build adds editable screenshot text notes with Apple's keyboard Dictation. It retains build 16's previous/next fix and build 15's artwork, quotations, and Clear queue. It is installed and tested locally; the published Mac download and website are unchanged.
+This build adds editable screenshot text notes with Apple's keyboard Dictation. It retains build 16's previous/next fix and build 15's artwork, quotations, and Clear queue. It is installed and tested locally; the published Mac download is unchanged. Website release and privacy instructions have been refreshed in source; hosted verification of that update is pending.
 
 ## Distribution status — 28 October 2026
 
-Build **0.5.1 (17)** was uploaded successfully to App Store Connect and is processing. Public Beta assignment and beta review are not yet complete; tester availability is not confirmed. The earlier **0.5.1 (14)** build is **Approved** in the existing **Public Beta** group. The full App Store version **1.0** remains **Prepare for Submission**. TestFlight distribution and App Store release are separate steps.
+Build **0.5.1 (17)** is **Approved** and available in the existing **Public Beta** TestFlight group. The verified iOS Builds row shows **Approved / Public Beta**, with no pending **Notify Testers** action. Automatic tester notification was enabled when it was submitted. The [public invitation](https://testflight.apple.com/join/bFbsKKmV) is unchanged. The full App Store version **1.0** remains **Prepare for Submission**; TestFlight distribution and App Store release are separate steps.
+
+The beta description, review notes, and What to Test instructions were saved with the voice-note steps and renamed website/GitHub links. Earlier build **0.5.1 (14)** remains approved.
 
 No new Mac binary is required for text notes: the iPad sends a normal flattened PNG through the existing save and clipboard path. Safari does not yet have the text-note editor.
 
@@ -38,7 +40,7 @@ If the keyboard microphone is unavailable, check **Settings → General → Keyb
 
 Private local evidence: `work/text-notes-final-17.xcresult` and `.log` (44 tests), `work/text-notes-composer-17.xcresult` and `.log` (final 5 surface tests), and `work/text-notes-composer-preview-17/` (synthetic PNGs).
 
-The App Store Connect export/upload also succeeded (`EXPORT SUCCEEDED`); Apple is processing build **0.5.1 (17)**.
+The App Store Connect export/upload succeeded (`EXPORT SUCCEEDED`). After processing, build **0.5.1 (17)** was assigned to **Public Beta**, submitted for review, and verified **Approved**.
 
 The Apple Development archive succeeded at `build/Ludwig-0.5.1-17.xcarchive` and was installed over the prior development build on the connected iPad, using the same bundle identifier and app container. Installation metadata is in `work/ludwig-ipad-installed-17.json`.
 
@@ -48,4 +50,4 @@ The wider Dictation matrix—other languages, offline availability, and disabled
 
 ## Tester check for build 17
 
-After build 17 is offered in TestFlight, update the existing app and verify **Beta 0.5.1 (17)** in its footer. Keep the existing Mac companion running. Try the five steps above, then press **Command–V** in a Mac chat or another app that accepts images. Confirm that both the text and Pencil marks arrive. Revisit the screenshot with Browse to check that its note remains editable. If reporting an issue, include the build number, what you tapped, and what happened; do not include pairing QR codes or private screenshots.
+Update the existing app in TestFlight and verify **Beta 0.5.1 (17)** in its footer. Keep the existing Mac companion running. Try the five steps above, then press **Command–V** in a Mac chat or another app that accepts images. Confirm that both the text and Pencil marks arrive. Revisit the screenshot with Browse to check that its note remains editable. If reporting an issue, include the build number, what you tapped, and what happened; do not include pairing QR codes or private screenshots.

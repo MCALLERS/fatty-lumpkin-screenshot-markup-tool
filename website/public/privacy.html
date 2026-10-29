@@ -18,13 +18,13 @@
     <p class="eyebrow">YOUR SCREENSHOTS, EXPLAINED.</p>
     <h1>Privacy & storage.</h1>
     <p class="policy-intro">Your Mac. Your iPad. A connection across your local network. You choose what to share next.</p>
-    <p class="policy-date">Effective 28 October 2026. Applies to Ludwig’s Annotated Screenshots, formerly Fatty Lumpkin Screenshot Markup Tool. The currently approved native iPad beta may still show the earlier Fatty Lumpkin Screenshot Tool name while the renamed update awaits review.</p>
+    <p class="policy-date">Effective 28 October 2026. Applies to Ludwig’s Annotated Screenshots, formerly Fatty Lumpkin Screenshot Markup Tool. Native iPad build 0.5.1 (17), including text and voice notes, is approved and available through Public Beta on TestFlight.</p>
     <h2>What the app does</h2>
     <p>The Mac companion reads screenshots from a local folder and transfers selected images to a paired iPad on the local network. The iPad returns a flattened, annotated PNG. The Mac saves it in Ready and writes it to the clipboard. We do not operate an upload server, analytics service, advertising service, or account system for this app.</p>
     <h2>Stored on your devices</h2>
     <ul>
       <li><strong>Mac:</strong> originals and annotated images are in Documents/Screenshot Tool. Pairing keys, completion receipts, capture identifiers, session boundaries, and screenshot-settings backups are in Library/Application Support/Screenshot Tool.</li>
-      <li><strong>Native iPad:</strong> pairing credentials are stored in Keychain. Draft drawings, cached screenshots, and pending exports are in the app’s local container, excluded from backup where configured by the app. Keychain entries can persist after app removal, depending on iPadOS behavior.</li>
+      <li><strong>Native iPad:</strong> pairing credentials are stored in Keychain. Draft drawings, text notes, cached screenshots, and pending exports are in the app’s local container, excluded from backup where configured by the app. Keychain entries can persist after app removal, depending on iPadOS behavior.</li>
       <li><strong>Safari:</strong> pairing cookies and local draft/queue state are stored in Safari website data.</li>
       <li><strong>Clipboard:</strong> the last completed image and its local file URL are copied on the Mac. System clipboard features and other apps may read or synchronize this content under your device settings.</li>
     </ul>
@@ -32,6 +32,8 @@
     <h2>Network and permissions</h2>
     <p class="privacy-callout">The Mac and iPad communicate over <strong>unencrypted local HTTP</strong>, authenticated by a pairing key. Use a trusted private network. Authentication is not transport encryption: a party able to observe local traffic may see images or credentials. Do not expose or port-forward the service to the Internet. A QR code or pairing link grants access to the local screenshot library; keep it private.</p>
     <p>Camera access is used to scan the Mac’s pairing QR code. Local Network access connects to the Mac. The app does not record or upload camera footage. The Mac may request Documents access to read and save screenshots.</p>
+    <h2>Optional keyboard Dictation</h2>
+    <p>You can type a screenshot note or use Apple’s Dictation microphone on the iPad keyboard. Ludwig does not start a recorder, retain raw audio, or send audio to a transcription provider. The app receives the resulting text, saves placed notes with the local draft, and includes them in the finished PNG. Apple’s Dictation processing, availability, and privacy settings apply; not every language or device works offline. See <a href="https://support.apple.com/guide/ipad/dictate-text-ipad997d9642/ipados">Apple’s iPad Dictation guide</a>.</p>
     <h2>Third parties</h2>
     <p>The app does not send screenshots to an AI provider. You choose when and where to paste or upload them. Those services’ policies apply after you share. iCloud Drive or another backup or sync service may independently copy the Documents folder if enabled. Apple may collect TestFlight diagnostics and tester feedback under its own policies. GitHub hosts downloads, source, and public issue reports under its policies. Cloudflare hosts the public information website; it does not receive screenshots from the app.</p>
     <h2>This website</h2>

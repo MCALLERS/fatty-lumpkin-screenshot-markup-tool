@@ -4,7 +4,7 @@ Track product improvements here. Local development builds are distinguished from
 
 ## VTA-01 — Speak a text note onto a screenshot
 
-**Status:** MVP implemented and locally validated in native iPad build **0.5.1 (17)**. All 44 simulator tests passed, and the user confirmed actual Dictation plus Pencil marks reached the Mac chat. It was uploaded successfully to App Store Connect and is processing. Public Beta assignment and beta review are not yet complete; tester availability is not confirmed. Details are in [the build notes](../NativeiPad/LOCAL-BUILD-17.md). Direct in-app recording and gesture shortcuts remain future work. Updated 28 October 2026.
+**Status:** MVP released in native iPad build **0.5.1 (17)**, **Approved** and available in the existing **Public Beta** TestFlight group. All 44 simulator tests passed, and the user confirmed actual Dictation plus Pencil marks reached the Mac chat. Details are in [the build notes](../NativeiPad/LOCAL-BUILD-17.md); the [public invitation](https://testflight.apple.com/join/bFbsKKmV) is unchanged. Direct in-app recording and gesture shortcuts remain future work. Updated 28 October 2026.
 
 **Goal:** Point to part of a screenshot, speak feedback, correct the transcript, and leave a movable text annotation that appears in the exported PNG alongside Pencil drawings. Examples: “Make this heading bigger” or “A-minus: clean layout, but the blue is too dark.”
 

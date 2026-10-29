@@ -8,9 +8,9 @@ The native app and Safari companion share the same local Mac protocol, but keep 
 
 ## Release status — 28 October 2026
 
-Native iPad **0.5.1 (14)** is **Approved** in the existing Public Beta TestFlight group. Build **0.5.0 (13)** is also approved. The full App Store version **1.0** remains **Prepare for Submission**; beta approval is separate from an App Store release.
+Native iPad **0.5.1 (17)** is **Approved** and available in the existing **Public Beta** TestFlight group. Earlier builds **0.5.1 (14)** and **0.5.0 (13)** are also approved. The full App Store version **1.0** remains **Prepare for Submission**; beta approval is separate from an App Store release.
 
-Build **0.5.1 (17)** is tested and installed locally. It was uploaded successfully to App Store Connect and is processing. Public Beta assignment and beta review are not yet complete; tester availability is not confirmed. The existing Mac 0.5.1 download supports its PNG handoff without an update.
+Build **0.5.1 (17)** passed local validation, upload, and Beta App Review. Existing testers can update in TestFlight; new testers can use the unchanged [public invitation](https://testflight.apple.com/join/bFbsKKmV). Automatic tester notification was enabled. The existing Mac 0.5.1 download supports its PNG handoff without an update.
 
 ## Build 17: text and voice notes
 

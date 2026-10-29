@@ -15,10 +15,9 @@ Start at the [website](https://screenshot.bombadillo-ai.com) for the workflow, M
 | Component | Current status |
 | --- | --- |
 | Mac 0.5.1 (14) | Published as [`v0.5.1-beta.1`](https://github.com/MCALLERS/ludwigs-annotated-screenshots/releases/tag/v0.5.1-beta.1); freshly downloaded package verified. |
-| Native iPad 0.5.1 (14) | **Approved** in the existing Public Beta TestFlight group; includes the new name and icon. Verified 28 October 2026. |
-| Native iPad 0.5.1 (17) | Tested locally with editable text notes and keyboard Dictation, plus build 16's navigation fix and earlier artwork, quotes, and Clear queue. Uploaded successfully to App Store Connect and processing. Public Beta assignment and beta review are not yet complete; tester availability is not confirmed. |
+| Native iPad 0.5.1 (17) | **Approved** and available in the existing **Public Beta** TestFlight group. Includes editable text notes and keyboard Dictation, the navigation fix, Ludwig artwork, quotes, and Clear queue. Verified 28 October 2026. |
 
-TestFlight approval is separate from a public App Store release. The full App Store version **1.0** remains **Prepare for Submission**. The earlier iPad **0.5.0 (13)** build is also approved; update to the latest build offered in TestFlight.
+TestFlight approval is separate from a public App Store release. The full App Store version **1.0** remains **Prepare for Submission**. Earlier iPad builds **0.5.1 (14)** and **0.5.0 (13)** are also approved. Existing testers can update to build 17 in TestFlight; new testers can use the same [public invitation](https://testflight.apple.com/join/bFbsKKmV).
 
 The public Mac asset is `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`. The website and renamed download were verified on 28 October 2026. Build 17's text notes use the existing PNG transfer, so no new Mac download is required for that feature. See the [upgrade note](docs/GETTING-STARTED.md#updating-from-fatty-lumpkin).
 
@@ -50,6 +49,6 @@ There is no app account, analytics SDK, cloud relay, or AI service integration. 
 - [Agent workflow skill](skills/screenshot-feedback/SKILL.md)
 - [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
-The working source includes native iPad build 17, beyond the approved build 14 archive. See [build 17 notes](NativeiPad/LOCAL-BUILD-17.md) for the text/voice workflow and validation; publishing this source does not publish that iPad build to TestFlight.
+The working source includes native iPad build 17, now approved for Public Beta. See [build 17 notes](NativeiPad/LOCAL-BUILD-17.md) for the text/voice workflow, validation, and separate TestFlight publication record.
 
 The code is available under the [MIT license](LICENSE). The screenshot-and-pencil icon is an original vector mark; see [brand assets and provenance](Branding/ART-DIRECTION.md). This is an independent project, with no affiliation with Apple, OpenAI, Anthropic, or any fantasy franchise.

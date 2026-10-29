@@ -4,7 +4,7 @@
 
 Start at the [website](https://screenshot.bombadillo-ai.com) for the Mac download and iPad invitation.
 
-**Publication status, checked 28 October 2026:** Mac **0.5.1 (14)** is published as [`v0.5.1-beta.1`](https://github.com/MCALLERS/ludwigs-annotated-screenshots/releases/tag/v0.5.1-beta.1); the public download and website were verified. Native iPad **0.5.1 (14)** is **Approved** in the existing **Public Beta** TestFlight group. Build **0.5.1 (17)** adds text/voice notes and further improvements; it was uploaded successfully to App Store Connect and is processing. Public Beta assignment and beta review are not yet complete; tester availability is not confirmed. The full App Store version **1.0** remains **Prepare for Submission**.
+**Publication status, checked 28 October 2026:** Mac **0.5.1 (14)** is published as [`v0.5.1-beta.1`](https://github.com/MCALLERS/ludwigs-annotated-screenshots/releases/tag/v0.5.1-beta.1); the public download and website were verified. Native iPad **0.5.1 (17)** is **Approved** and available in the existing **Public Beta** TestFlight group, including text/voice notes and the navigation fix. The full App Store version **1.0** remains **Prepare for Submission**; colleagues install the native app through TestFlight.
 
 ## Install on your Mac
 
@@ -22,7 +22,7 @@ Version 0.5.1 adopts the new name and icon. Quit the old Mac app before opening 
 
 Use the same trusted local network on both devices. Guest networks often prevent devices from communicating.
 
-**Native app:** open the [TestFlight invitation](https://testflight.apple.com/join/bFbsKKmV) on your iPad. Install Apple's TestFlight app if prompted, return to the invitation, and install **Ludwig's Annotated Screenshots**. The renamed **0.5.1 (14)** build is approved for Public Beta. Open the installed app, tap **Connect your Mac**, then **Scan Mac QR code**. On Mac, click **Connect iPad**. Scan that QR code from inside the iPad app. Allow Camera and Local Network access.
+**Native app:** open the [TestFlight invitation](https://testflight.apple.com/join/bFbsKKmV) on your iPad. Install Apple's TestFlight app if prompted, return to the invitation, and install **Ludwig's Annotated Screenshots**. Build **0.5.1 (17)** is approved for Public Beta. Existing testers can tap **Update** in TestFlight. Open the installed app, tap **Connect your Mac**, then **Scan Mac QR code**. On Mac, click **Connect iPad**. Scan that QR code from inside the iPad app. Allow Camera and Local Network access.
 
 **Safari alternative:** scan the Mac QR code with the iPad Camera app and open the link in Safari. Use **Share → Add to Home Screen** to save a shortcut. You can bookmark the paired page too.
 
@@ -45,7 +45,7 @@ The clipboard contains the most recently completed image. For the whole batch, p
 
 ## Text and voice notes (native build 0.5.1 (17))
 
-Build 17 is uploaded and processing at Apple; Public Beta assignment and beta review are not yet complete. Once offered, update through TestFlight and check for **Beta 0.5.1 (17)** in the app footer. Safari and earlier native builds do not have this editor.
+Build 17 is approved and available through Public Beta. Update through TestFlight and check for **Beta 0.5.1 (17)** in the app footer. Safari and earlier native builds do not have this editor.
 
 1. With a screenshot open, tap **Text / voice**, then tap a place on the image.
 2. Use the microphone on the iPad keyboard to dictate, or type.
