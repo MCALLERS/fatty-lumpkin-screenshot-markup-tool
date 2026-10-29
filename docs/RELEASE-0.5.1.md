@@ -2,7 +2,7 @@
 
 ## Current status — 28 October 2026
 
-- **Mac 0.5.1 (14):** published, signed, notarized, stapled, and verified from the public download. The existing Mac package is unchanged. Website release and privacy instructions have been refreshed in source; verification of that website update after deployment is pending.
+- **Mac 0.5.1 (14):** published, signed, notarized, stapled, and verified from the public download. The existing Mac package is unchanged. Website release and privacy instructions were deployed from commit `d28ef26`; the public landing page and privacy route matched the reviewed source bytes on 28 October 2026.
 - **Native iPad 0.5.1 (17):** **Approved** and available in the existing **Public Beta** TestFlight group. Local validation and the physical voice-note workflow passed. Automatic tester notification was enabled; the [public invitation](https://testflight.apple.com/join/bFbsKKmV) is unchanged.
 - Earlier native iPad builds **0.5.1 (14)** and **0.5.0 (13)** are also approved.
 - **Full App Store version 1.0:** **Prepare for Submission**. Beta approval does not make this a public App Store release.

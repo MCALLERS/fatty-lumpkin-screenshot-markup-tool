@@ -1,6 +1,6 @@
 # iPad build 0.5.1 (17) — text and voice notes
 
-This build adds editable screenshot text notes with Apple's keyboard Dictation. It retains build 16's previous/next fix and build 15's artwork, quotations, and Clear queue. It is installed and tested locally; the published Mac download is unchanged. Website release and privacy instructions have been refreshed in source; hosted verification of that update is pending.
+This build adds editable screenshot text notes with Apple's keyboard Dictation. It retains build 16's previous/next fix and build 15's artwork, quotations, and Clear queue. It is installed and tested locally; the published Mac download is unchanged. Website release and privacy instructions were deployed from commit `d28ef26`; both public pages matched the reviewed source bytes on 28 October 2026.
 
 ## Distribution status — 28 October 2026
 
