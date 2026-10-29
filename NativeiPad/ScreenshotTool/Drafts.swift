@@ -5,6 +5,20 @@ struct DraftMetadata: Codable {
     let capture: Capture
     var dirty: Bool
     var submission: String?
+    var notes: [TextNote]
+
+    init(capture: Capture, dirty: Bool, submission: String? = nil, notes: [TextNote] = []) {
+        self.capture = capture; self.dirty = dirty; self.submission = submission; self.notes = notes
+    }
+
+    private enum CodingKeys: String, CodingKey { case capture, dirty, submission, notes }
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        capture = try values.decode(Capture.self, forKey: .capture)
+        dirty = try values.decode(Bool.self, forKey: .dirty)
+        submission = try values.decodeIfPresent(String.self, forKey: .submission)
+        notes = try values.decodeIfPresent([TextNote].self, forKey: .notes) ?? []
+    }
 }
 struct SessionMetadata: Codable {
     var queue: CaptureQueue
@@ -62,13 +76,17 @@ final class DraftStore {
 }
 
 enum ImageExporter {
-    static func png(image: UIImage, drawing: PKDrawing, width: Int, height: Int) throws -> Data {
+    static func png(image: UIImage, drawing: PKDrawing, width: Int, height: Int, notes: [TextNote] = []) throws -> Data {
         guard let cg = image.cgImage, cg.width == width, cg.height == height, width > 0, height > 0, width * height <= 16000000 else { throw AppError.message("The screenshot dimensions do not match. Please open it again.") }
         let format = UIGraphicsImageRendererFormat(); format.scale = 1; format.opaque = true
         let rect = CGRect(x: 0, y: 0, width: width, height: height)
+        guard notes.allSatisfy({ TextNoteRenderer.fits($0, imageSize: rect.size) }) else {
+            throw AppError.message("A text note is outside the screenshot or too long to fit. Move or shorten it before tapping Done.")
+        }
         let output = UIGraphicsImageRenderer(size: rect.size, format: format).image { context in
             UIColor.white.setFill(); context.fill(rect); image.draw(in: rect)
             drawing.image(from: rect, scale: 1).draw(in: rect)
+            for note in notes { TextNoteRenderer.draw(note, in: rect.size) }
         }
         guard let data = output.pngData(), data.count <= 40 * 1024 * 1024 else { throw AppError.message("The finished image is too large. Capture a smaller area.") }
         return data

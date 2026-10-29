@@ -1,6 +1,14 @@
 import SwiftUI
 import PencilKit
 
+struct TextNoteEditor: Identifiable {
+    let id = UUID()
+    var note: TextNote
+    let captureID: String
+    let selectionID: UUID
+    let isNew: Bool
+}
+
 @MainActor final class WorkspaceModel: ObservableObject {
     @Published var connection: Connection?
     @Published var captures: [Capture] = []
@@ -8,6 +16,9 @@ import PencilKit
     @Published var current: Capture?
     @Published var image: UIImage?
     @Published var drawing = PKDrawing()
+    @Published private(set) var notes: [TextNote] = []
+    @Published var noteMode = false
+    @Published private(set) var noteEditor: TextNoteEditor?
     @Published var selection = UUID()
     @Published var busy = false
     @Published var dirty = false
@@ -47,6 +58,7 @@ import PencilKit
     private var acknowledgementStarted: Date?
     private var librarySessionID: String?
     private var pendingResetID: String?
+    private let fallbackUndoManager = UndoManager()
 
     init(connection: Connection? = ConnectionVault.read(), configuration: URLSessionConfiguration = .ephemeral, draftRoot: URL? = nil) {
         self.configuration = configuration; self.draftRoot = draftRoot
@@ -68,12 +80,14 @@ import PencilKit
     }
     private func neighbor(_ offset: Int) -> Capture? {
         let ordered = orderedCaptures
-        guard let id = current?.id, let index = ordered.firstIndex(where: { $0.id == id }), ordered.indices.contains(index + offset) else { return nil }
+        // Done clears the canvas, but saved captures remain available for browsing.
+        guard let current else { return offset < 0 ? ordered.last : ordered.first }
+        guard let index = ordered.firstIndex(where: { $0.id == current.id }), ordered.indices.contains(index + offset) else { return nil }
         return ordered[index + offset]
     }
     func browse() {
-        guard !busy, loadingID == nil else { return }
-        persist(); error = nil
+        guard !busy, loadingID == nil, noteEditor == nil else { return }
+        guard persist() else { return }; error = nil
         let unfinished = drafts?.unfinishedIDs() ?? []
         let missingDrafts = unfinished.subtracting(Set(captures.map(\.id))).compactMap { drafts?.draft($0)?.capture }
         browser = CaptureBrowserSnapshot(captures: (captures + missingDrafts).sorted(by: Capture.oldestFirst), selectedID: current?.id, draftIDs: unfinished)
@@ -97,16 +111,16 @@ import PencilKit
         return nil
     }
     func manageSession() {
-        guard !busy, loadingID == nil else { return }
-        persist(); error = nil; cleanupPreview = nil; sessionNotice = nil; showSessionManager = true
+        guard !busy, loadingID == nil, noteEditor == nil else { return }
+        guard persist() else { return }; error = nil; cleanupPreview = nil; sessionNotice = nil; showSessionManager = true
     }
     func requestClearQueue() {
-        guard !busy, loadingID == nil, !captures.isEmpty || current != nil else { return }
+        guard !busy, loadingID == nil, noteEditor == nil, !captures.isEmpty || current != nil else { return }
         if let issue = clearQueueIssue { error = issue; return }
         error = nil; showClearQueueConfirmation = true
     }
     func clearQueue() async {
-        guard !busy, loadingID == nil else { return }
+        guard !busy, loadingID == nil, noteEditor == nil else { return }
         if let issue = clearQueueIssue { error = issue; return }
         guard let client, let drafts else { error = "Could not open local drafts. Your queue has not changed."; return }
         busy = true; revision += 1; error = nil; cleanupPreview = nil
@@ -118,7 +132,7 @@ import PencilKit
                 drawing = canvas.drawing; dirty = true; submission = nil
             }
             if let current {
-                try drafts.write(DraftMetadata(capture: current, dirty: dirty, submission: submission), drawing: drawing)
+                try drafts.write(DraftMetadata(capture: current, dirty: dirty, submission: submission, notes: notes), drawing: drawing)
             }
             if pendingResetID == nil { pendingResetID = UUID().uuidString.lowercased() }
             try drafts.session(SessionMetadata(queue: queue, currentID: current?.id, librarySessionID: librarySessionID, pendingResetID: pendingResetID))
@@ -135,9 +149,9 @@ import PencilKit
         }
     }
     func startNewSession() async {
-        guard let client, !busy, loadingID == nil else { return }
+        guard let client, !busy, loadingID == nil, noteEditor == nil else { return }
         if let issue = sessionActionIssue { error = issue; return }
-        persist(); busy = true; revision += 1; error = nil; cleanupPreview = nil
+        guard persist() else { return }; busy = true; revision += 1; error = nil; cleanupPreview = nil
         if pendingResetID == nil { pendingResetID = UUID().uuidString.lowercased() }
         persistSession()
         defer { busy = false }
@@ -151,7 +165,7 @@ import PencilKit
         } catch { self.error = friendly(error) }
     }
     func previewCleanup() async {
-        guard let client, !busy, loadingID == nil else { return }
+        guard let client, !busy, loadingID == nil, noteEditor == nil else { return }
         if let issue = sessionActionIssue { error = issue; return }
         busy = true; error = nil; cleanupPreview = nil; sessionNotice = nil
         defer { busy = false }
@@ -159,7 +173,7 @@ import PencilKit
         catch { self.error = friendly(error) }
     }
     func trashPreviousSessions() async {
-        guard let client, let preview = cleanupPreview, preview.fileCount > 0, !busy, loadingID == nil else { return }
+        guard let client, let preview = cleanupPreview, preview.fileCount > 0, !busy, loadingID == nil, noteEditor == nil else { return }
         if let issue = sessionActionIssue { error = issue; return }
         busy = true; revision += 1; error = nil
         defer { busy = false; cleanupPreview = nil }
@@ -173,11 +187,12 @@ import PencilKit
         } catch { self.error = friendly(error) + " Review older files again before retrying." }
     }
     @discardableResult func discardDrawing(_ capture: Capture) -> Bool {
-        guard !busy, loadingID == nil, let drafts else { return false }
+        guard !busy, loadingID == nil, noteEditor == nil, let drafts else { return false }
         do {
             try drafts.discardDrawing(capture)
             if current?.id == capture.id {
-                dirty = false; submission = nil; drawing = PKDrawing(); selection = UUID()
+                dirty = false; submission = nil; drawing = PKDrawing(); notes = []; selection = UUID()
+                fallbackUndoManager.removeAllActions()
                 canUndo = false; canRedo = false; status = "Unfinished drawing discarded. The original screenshot is kept."
             }
             error = nil; persistSession()
@@ -185,7 +200,8 @@ import PencilKit
         } catch { self.error = friendly(error); return false }
     }
     private func clearSelection() {
-        current = nil; image = nil; drawing = PKDrawing(); dirty = false; submission = nil
+        current = nil; image = nil; drawing = PKDrawing(); notes = []; noteEditor = nil; noteMode = false; dirty = false; submission = nil
+        fallbackUndoManager.removeAllActions()
         canvas = nil; fitCanvas = nil; selection = UUID(); manualSelection = false
         canUndo = false; canRedo = false; completedMessage = nil; acknowledgement = nil
     }
@@ -207,25 +223,26 @@ import PencilKit
     private func configure(_ value: Connection) {
         revision += 1; connection = value; client = MacClient(value, configuration: configuration); locallySaved = []; browser = nil
         librarySession = nil; librarySessionID = nil; supportsSessions = false; cleanupPreview = nil; pendingResetID = nil
-        current = nil; image = nil; drawing = PKDrawing(); dirty = false; acknowledgement = nil
+        current = nil; image = nil; drawing = PKDrawing(); notes = []; noteEditor = nil; noteMode = false; dirty = false; acknowledgement = nil
+        fallbackUndoManager.removeAllActions()
         do {
             drafts = try DraftStore(namespace: value.namespace, root: draftRoot)
             let session = drafts!.session(); queue = session.queue
             librarySessionID = session.librarySessionID; pendingResetID = session.pendingResetID
             if let id = session.currentID, let draft = drafts?.draft(id), draft.dirty, let image = drafts?.image(id) {
-                current = draft.capture; self.image = image; drawing = drafts!.drawing(id); dirty = true; submission = draft.submission; selection = UUID()
+                current = draft.capture; self.image = image; drawing = drafts!.drawing(id); notes = draft.notes; dirty = true; submission = draft.submission; selection = UUID()
                 status = "Your unfinished drawing is restored. Connecting to your Mac…"
             } else { status = "Connecting to your Mac…" }
         } catch { self.error = "Could not open local drafts: " + error.localizedDescription }
     }
     func pair(_ text: String) async {
-        guard !busy else { return }
+        guard !busy, noteEditor == nil else { return }
         busy = true; error = nil; defer { busy = false }
         do {
             let candidate = try Connection.parse(text)
             pendingPairingLink = text; pairingAddress = candidate.displayName
             _ = try await MacClient(candidate).library()
-            persist()
+            guard persist() else { return }
             try ConnectionVault.write(candidate)
             configure(candidate); connected = true; showPairing = false; error = nil; pendingPairingLink = nil; pairingAddress = nil
         } catch {
@@ -236,12 +253,12 @@ import PencilKit
     }
     func retryPairing() async { if let link = pendingPairingLink { await pair(link) } }
     func poll() async {
-        guard let client, !polling, !busy else { return }
+        guard let client, !polling, !busy, noteEditor == nil else { return }
         polling = true; defer { polling = false }
         let requestRevision = revision
         do {
             let result = try await client.libraryState()
-            guard !busy, loadingID == nil, revision == requestRevision else { return }
+            guard !busy, loadingID == nil, noteEditor == nil, revision == requestRevision else { return }
             applyLibrary(result); connected = true
             if browser == nil, !showSessionManager, !showClearQueueConfirmation, !showLudwigAbout, current == nil, let first = pending.first { await open(first, manual: false) }
             else if current == nil, completedMessage == nil { status = "Ready for your next screenshot." }
@@ -264,7 +281,7 @@ import PencilKit
         }
     }
     @discardableResult func open(_ capture: Capture, manual: Bool = true) async -> Bool {
-        guard !busy, loadingID == nil else { return false }
+        guard !busy, loadingID == nil, noteEditor == nil else { return false }
         if capture.id == current?.id { manualSelection = manual; return true }
         revision += 1 // An older library request must not take over a manual selection.
         return await load(capture, manual: manual)
@@ -272,7 +289,8 @@ import PencilKit
     @discardableResult private func load(_ capture: Capture, manual: Bool) async -> Bool {
         guard let client, let drafts else { return false }
         if let canvas, dirty { drawing = canvas.drawing }
-        persist(); loadingID = capture.id; error = nil; defer { loadingID = nil }
+        guard persist() else { return false }
+        loadingID = capture.id; error = nil; defer { loadingID = nil }
         let requestRevision = revision
         do {
             let bytes: Data
@@ -287,7 +305,8 @@ import PencilKit
             try drafts.store(capture, image: bytes)
             canvas = nil; fitCanvas = nil
             self.current = capture; self.image = image; drawing = drafts.drawing(capture.id)
-            let prior = drafts.draft(capture.id); dirty = prior?.dirty ?? false; submission = prior?.submission
+            let prior = drafts.draft(capture.id); dirty = prior?.dirty ?? false; submission = prior?.submission; notes = prior?.notes ?? []
+            noteEditor = nil; noteMode = false; fallbackUndoManager.removeAllActions()
             manualSelection = manual; completedMessage = nil; acknowledgement = nil; selection = UUID()
             canUndo = false; canRedo = false; status = dirty ? "Your unfinished drawing is restored." : "Draw with Pencil. Use two fingers to move and zoom."
             if restoredLocal { status = "Local draft restored. The Mac source is unavailable; retry Done, or discard this drawing in Browse." }
@@ -298,27 +317,112 @@ import PencilKit
     func drawingChanged(_ value: PKDrawing, selectionID: UUID) {
         guard selection == selectionID, current != nil, !busy, loadingID == nil else { return }
         drawing = value; dirty = true; submission = nil
-        canUndo = canvas?.undoManager?.canUndo ?? false; canRedo = canvas?.undoManager?.canRedo ?? false
+        refreshUndoState()
         draftTask?.cancel()
         draftTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(250))
             guard !Task.isCancelled else { return }; self?.persist()
         }
     }
-    func persist() {
+    @discardableResult func persist() -> Bool {
         draftTask?.cancel(); draftTask = nil
-        guard let current, let drafts else { persistSession(); return }
-        do { try drafts.write(DraftMetadata(capture: current, dirty: dirty, submission: submission), drawing: drawing); persistSession() }
-        catch { self.error = "Your drawing is in memory, but could not be saved on this iPad. Keep the app open and tap Done. " + error.localizedDescription }
+        guard let current, let drafts else { return persistSession() }
+        do { try drafts.write(DraftMetadata(capture: current, dirty: dirty, submission: submission, notes: notes), drawing: drawing); return persistSession() }
+        catch { self.error = "Your annotations are in memory, but could not be saved on this iPad. Keep the app open and tap Done. " + error.localizedDescription; return false }
     }
-    private func persistSession() {
-        do { try drafts?.session(SessionMetadata(queue: queue, currentID: current?.id, librarySessionID: librarySessionID, pendingResetID: pendingResetID)) }
-        catch { self.error = "Could not remember the current queue. " + error.localizedDescription }
+    @discardableResult private func persistSession() -> Bool {
+        do { try drafts?.session(SessionMetadata(queue: queue, currentID: current?.id, librarySessionID: librarySessionID, pendingResetID: pendingResetID)); return true }
+        catch { self.error = "Could not remember the current queue. " + error.localizedDescription; return false }
     }
-    func undo() { canvas?.undoManager?.undo() }
-    func redo() { canvas?.undoManager?.redo() }
+    private var activeUndoManager: UndoManager { canvas?.undoManager ?? fallbackUndoManager }
+    func refreshUndoState() { canUndo = activeUndoManager.canUndo; canRedo = activeUndoManager.canRedo }
+    func undo() {
+        guard !busy, loadingID == nil, noteEditor == nil else { return }
+        activeUndoManager.undo(); refreshUndoState()
+    }
+    func redo() {
+        guard !busy, loadingID == nil, noteEditor == nil else { return }
+        activeUndoManager.redo(); refreshUndoState()
+    }
+
+    func toggleNoteMode() {
+        guard current != nil, !busy, loadingID == nil, noteEditor == nil else { return }
+        snapshotCanvas(); guard persist() else { return }; manualSelection = true; revision += 1
+        noteMode.toggle()
+        status = noteMode ? "Tap to add a note. Tap a note to edit; drag to move." : "Draw with Pencil. Use two fingers to move and zoom."
+    }
+    private func snapshotCanvas() {
+        if let canvas, canvas.drawing.dataRepresentation() != drawing.dataRepresentation() {
+            drawing = canvas.drawing; dirty = true; submission = nil
+        }
+    }
+    func beginNote(at point: CGPoint, selectionID: UUID) {
+        guard selectionID == selection, let current, image != nil, !busy, loadingID == nil, noteEditor == nil,
+              point.x.isFinite, point.y.isFinite else { return }
+        snapshotCanvas(); guard persist() else { return }; manualSelection = true; revision += 1; error = nil; noteMode = true
+        let note = TextNote.new(at: point, imageSize: CGSize(width: current.width, height: current.height))
+        noteEditor = TextNoteEditor(note: note, captureID: current.id, selectionID: selection, isNew: true)
+    }
+    func editNote(id: UUID, selectionID: UUID) {
+        guard selectionID == selection, let current, !busy, loadingID == nil, noteEditor == nil,
+              let note = notes.first(where: { $0.id == id }) else { return }
+        snapshotCanvas(); guard persist() else { return }; manualSelection = true; revision += 1; error = nil; noteMode = true
+        noteEditor = TextNoteEditor(note: note, captureID: current.id, selectionID: selection, isNew: false)
+    }
+    func cancelNoteEditing() { noteEditor = nil; error = nil }
+    @discardableResult func commitNote(_ proposed: TextNote) -> Bool {
+        guard let editor = noteEditor, let current, editor.captureID == current.id, editor.selectionID == selection,
+              proposed.id == editor.note.id, !busy, loadingID == nil else { return false }
+        var note = proposed; note.text = note.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !note.text.isEmpty else { error = "Speak or type a note first."; return false }
+        guard note.text.count <= 1000 else { error = "Keep each note to 1,000 characters or fewer. You can add another note."; return false }
+        let size = CGSize(width: current.width, height: current.height)
+        note = TextNoteRenderer.normalized(note, imageSize: size)
+        guard TextNoteRenderer.fits(note, imageSize: size) else {
+            error = "This note is too tall for the screenshot. Choose smaller text or shorten the note."; return false
+        }
+        var changed = notes
+        if editor.isNew { changed.append(note) }
+        else {
+            guard let index = changed.firstIndex(where: { $0.id == note.id }) else { return false }
+            changed[index] = note
+        }
+        noteEditor = nil; error = nil
+        replaceNotes(changed, action: editor.isNew ? "Add note" : "Edit note")
+        status = "Note placed. Drag to move, tap to edit, or choose Draw."
+        return true
+    }
+    @discardableResult func deleteEditingNote() -> Bool {
+        guard let editor = noteEditor, !editor.isNew, editor.captureID == current?.id, editor.selectionID == selection,
+              !busy, loadingID == nil else { return false }
+        noteEditor = nil; error = nil
+        replaceNotes(notes.filter { $0.id != editor.note.id }, action: "Delete note")
+        status = "Note removed. Undo brings it back."
+        return true
+    }
+    func moveNote(id: UUID, to point: CGPoint, selectionID: UUID) {
+        guard selectionID == selection, let current, !busy, loadingID == nil, noteEditor == nil,
+              point.x.isFinite, point.y.isFinite, let index = notes.firstIndex(where: { $0.id == id }) else { return }
+        var changed = notes; changed[index].x = point.x; changed[index].y = point.y
+        changed[index] = TextNoteRenderer.normalized(changed[index], imageSize: CGSize(width: current.width, height: current.height))
+        replaceNotes(changed, action: "Move note")
+    }
+    private func replaceNotes(_ value: [TextNote], action: String) {
+        guard value != notes else { return }
+        let previous = notes, selectionID = selection, manager = activeUndoManager
+        let group = !manager.isUndoing && !manager.isRedoing
+        if group { manager.beginUndoGrouping() }
+        manager.registerUndo(withTarget: self) { target in
+            guard target.selection == selectionID else { return }
+            target.replaceNotes(previous, action: action)
+        }
+        manager.setActionName(action)
+        if group { manager.endUndoGrouping() }
+        snapshotCanvas(); notes = value; dirty = true; submission = nil; revision += 1; manualSelection = true
+        persist(); refreshUndoState()
+    }
     func finish() async {
-        guard let capture = current, let image, let client, let drafts, !busy, loadingID == nil else { return }
+        guard let capture = current, let image, let client, let drafts, !busy, loadingID == nil, noteEditor == nil else { return }
         // Capture any final stroke before disabling interaction.
         if let canvas { drawing = canvas.drawing }
         busy = true; revision += 1; error = nil; persist()
@@ -330,10 +434,10 @@ import PencilKit
             if let previous = submission, let cached = drafts.pending(capture.id) { id = previous; bytes = cached }
             else {
                 id = UUID().uuidString.lowercased()
-                bytes = try ImageExporter.png(image: image, drawing: drawing, width: capture.width, height: capture.height)
+                bytes = try ImageExporter.png(image: image, drawing: drawing, width: capture.width, height: capture.height, notes: notes)
                 try drafts.pending(bytes, id: capture.id)
                 submission = id
-                try drafts.write(DraftMetadata(capture: capture, dirty: true, submission: id), drawing: drawing)
+                try drafts.write(DraftMetadata(capture: capture, dirty: true, submission: id, notes: notes), drawing: drawing)
             }
             status = "Sending to your Mac…"
             let receipt = try await client.save(bytes, capture: capture, id: id)
@@ -346,7 +450,8 @@ import PencilKit
                 await load(next, manual: false)
             } else {
                 let count = max(1, queue.ids.count)
-                current = nil; self.image = nil; drawing = PKDrawing(); canvas = nil; selection = UUID()
+                current = nil; self.image = nil; drawing = PKDrawing(); notes = []; noteEditor = nil; noteMode = false; canvas = nil; selection = UUID()
+                fallbackUndoManager.removeAllActions()
                 queue = CaptureQueue(); manualSelection = false; canUndo = false; canRedo = false
                 completedMessage = count > 1 ? "All \(count) screenshots saved. Drag the PNGs together from Documents → Screenshot Tool → Ready on your Mac. The clipboard holds only the last image." : "Your annotated PNG is saved in Documents → Screenshot Tool → Ready on your Mac."
                 acknowledgement = receipt.id; acknowledgementStarted = Date(); status = "Saved on your Mac. Checking the clipboard…"; persistSession()

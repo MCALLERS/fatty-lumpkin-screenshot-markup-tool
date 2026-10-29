@@ -60,15 +60,24 @@ struct WorkspaceView: View {
                     HStack { Spacer(); queueNavigation }
                 }
             }.font(.subheadline).padding(.horizontal, 20).padding(.vertical, 4).background(AppPalette.paper)
-            HStack(spacing: 16) {
-                if model.loadingID != nil { ProgressView("Opening…") }
-                else { Text(model.current?.title ?? "Choose a screenshot or capture a new one on your Mac.").lineLimit(1).truncationMode(.middle) }
-                Spacer()
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    if model.loadingID != nil { ProgressView("Opening…") }
+                    else { Text(model.current?.title ?? "Choose a screenshot or capture a new one on your Mac.").lineLimit(1).truncationMode(.middle) }
+                    Spacer()
+                }
                 if model.current != nil {
-                    Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }.disabled(!model.canUndo || model.busy).accessibilityLabel("Undo")
-                    Button { model.redo() } label: { Image(systemName: "arrow.uturn.forward") }.disabled(!model.canRedo || model.busy).accessibilityLabel("Redo")
-                    Button("Fit") { model.fitCanvas?() }
-                    Toggle("Finger drawing", isOn: $model.fingerDrawing).fixedSize().disabled(model.busy)
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 16) { annotationTools; Spacer(); drawingOptions }
+                        VStack(alignment: .leading, spacing: 10) {
+                            annotationTools
+                            HStack { drawingOptions; Spacer() }
+                        }
+                    }
+                    if model.noteMode {
+                        Text("Tap to place a note. Tap a note to edit; drag to move.")
+                            .font(.caption).foregroundStyle(AppPalette.secondary)
+                    }
                 }
             }.font(.subheadline).padding(.horizontal, 20).padding(.vertical, 10).background(AppPalette.paper)
             ZStack {
@@ -92,7 +101,7 @@ struct WorkspaceView: View {
                 LudwigThoughtView(thought: TractatusThought.all[quoteIndex]) { model.showLudwigAbout = true }
                     .disabled(model.busy || model.loadingID != nil)
                 Divider().overlay(ink.opacity(0.06))
-                HStack { Text(model.status).accessibilityIdentifier("status"); Spacer(); if let current = model.current { Text("\(current.width) × \(current.height)").monospacedDigit() }; Text("Beta 0.5.1 (15)") }
+                HStack { Text(model.status).accessibilityIdentifier("status"); Spacer(); if let current = model.current { Text("\(current.width) × \(current.height)").monospacedDigit() }; Text("Beta 0.5.1 (17)") }
                 Text("On your Mac: ⌃⌥⌘S opens finished screenshots · Keep Ludwig's Annotated Screenshots running.")
                     .accessibilityLabel("On your Mac: Control Option Command S opens finished screenshots. Keep Ludwig's Annotated Screenshots running.")
             }.font(.caption).foregroundStyle(AppPalette.secondary).padding(14).frame(maxWidth: .infinity, alignment: .leading).background(AppPalette.paper)
@@ -100,6 +109,9 @@ struct WorkspaceView: View {
             .onAppear { if !startedQuotes { nextThought(); startedQuotes = true } }
             .onChange(of: model.completedCaptureCount) { _, _ in nextThought() }
             .sheet(isPresented: $model.showLudwigAbout) { AboutLudwigView() }
+            .sheet(item: Binding(get: { model.noteEditor }, set: { if $0 == nil { model.cancelNoteEditing() } })) { editor in
+                TextNoteComposer(model: model, editor: editor)
+            }
             .confirmationDialog("Clear the screenshot queue?", isPresented: $model.showClearQueueConfirmation, titleVisibility: .visible) {
                 Button("Clear queue · Reset to 0") { Task { await model.clearQueue() } }
                 Button("Keep queue", role: .cancel) {}
@@ -109,7 +121,27 @@ struct WorkspaceView: View {
             .sheet(isPresented: $model.showPairing) { PairingView(model: model) }
             .sheet(item: $model.browser) { snapshot in CaptureBrowserView(model: model, snapshot: snapshot) }
             .sheet(isPresented: $model.showSessionManager) { SessionManagementView(model: model) }
-            .alert("Ludwig's Annotated Screenshots", isPresented: Binding(get: { model.error != nil && !model.showPairing && model.browser == nil && !model.showSessionManager }, set: { if !$0 { model.error = nil } })) { Button("OK") { model.error = nil } } message: { Text(model.error ?? "") }
+            .alert("Ludwig's Annotated Screenshots", isPresented: Binding(get: { model.error != nil && !model.showPairing && model.browser == nil && !model.showSessionManager && model.noteEditor == nil }, set: { if !$0 { model.error = nil } })) { Button("OK") { model.error = nil } } message: { Text(model.error ?? "") }
+    }
+    private var annotationTools: some View {
+        HStack(spacing: 14) {
+            Button(action: model.toggleNoteMode) {
+                Label(model.noteMode ? "Draw" : "Text / voice", systemImage: model.noteMode ? "pencil.tip" : "text.bubble")
+            }.buttonStyle(.bordered).disabled(model.busy || model.loadingID != nil)
+                .accessibilityHint(model.noteMode ? "Return to Pencil drawing" : "Choose where to put a note, then speak using keyboard Dictation or type")
+                .accessibilityIdentifier("textNoteMode")
+                .accessibilityAction(named: "Add note at center") {
+                    if let capture = model.current { model.beginNote(at: CGPoint(x: Double(capture.width) / 2, y: Double(capture.height) / 2), selectionID: model.selection) }
+                }
+            Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward").frame(minWidth: 36, minHeight: 36) }.disabled(!model.canUndo || model.busy).accessibilityLabel("Undo")
+            Button { model.redo() } label: { Image(systemName: "arrow.uturn.forward").frame(minWidth: 36, minHeight: 36) }.disabled(!model.canRedo || model.busy).accessibilityLabel("Redo")
+        }.fixedSize(horizontal: true, vertical: false)
+    }
+    private var drawingOptions: some View {
+        HStack(spacing: 16) {
+            Button("Fit") { model.fitCanvas?() }
+            Toggle("Finger drawing", isOn: $model.fingerDrawing).fixedSize().disabled(model.busy || model.noteMode)
+        }.fixedSize(horizontal: true, vertical: false)
     }
     private func nextThought() {
         quoteIndex = max(0, quoteCursor) % TractatusThought.all.count
@@ -135,11 +167,13 @@ struct WorkspaceView: View {
         HStack(spacing: 4) {
             Button { if let capture = model.previousCapture { Task { await model.open(capture) } } } label: { Image(systemName: "chevron.left").frame(minWidth: 44, minHeight: 44) }
                 .disabled(model.previousCapture == nil || model.busy || model.loadingID != nil)
-                .accessibilityLabel("Previous screenshot").accessibilityIdentifier("previousScreenshot")
+                .opacity(model.previousCapture == nil ? 0.35 : 1)
+                .accessibilityLabel(model.current == nil ? "Open newest screenshot" : "Previous screenshot").accessibilityIdentifier("previousScreenshot")
             Text(model.navigationPosition).monospacedDigit().font(.subheadline.weight(.medium)).padding(.horizontal, 10).padding(.vertical, 6).background(AppPalette.wash, in: Capsule()).accessibilityIdentifier("queuePosition")
             Button { if let capture = model.followingCapture { Task { await model.open(capture) } } } label: { Image(systemName: "chevron.right").frame(minWidth: 44, minHeight: 44) }
                 .disabled(model.followingCapture == nil || model.busy || model.loadingID != nil)
-                .accessibilityLabel("Next screenshot").accessibilityIdentifier("nextScreenshot")
+                .opacity(model.followingCapture == nil ? 0.35 : 1)
+                .accessibilityLabel(model.current == nil ? "Open oldest screenshot" : "Next screenshot").accessibilityIdentifier("nextScreenshot")
         }.fixedSize(horizontal: true, vertical: false)
     }
 }

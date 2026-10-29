@@ -6,13 +6,29 @@ See [build instructions](../docs/BUILDING.md), [setup](../docs/GETTING-STARTED.m
 
 The native app and Safari companion share the same local Mac protocol, but keep their pairing credentials and unfinished drafts separately. Saves are full-resolution flattened PNGs, limited to 16 million pixels. Local retry data includes a stable submission ID so a dropped response does not duplicate an export.
 
-## Local build 15
+## Release status — 28 October 2026
+
+Native iPad **0.5.1 (14)** is **Approved** in the existing Public Beta TestFlight group. Build **0.5.0 (13)** is also approved. The full App Store version **1.0** remains **Prepare for Submission**; beta approval is separate from an App Store release.
+
+Build **0.5.1 (17)** is tested and installed locally. It was uploaded successfully to App Store Connect and is processing. Public Beta assignment and beta review are not yet complete; tester availability is not confirmed. The existing Mac 0.5.1 download supports its PNG handoff without an update.
+
+## Build 17: text and voice notes
+
+Build **0.5.1 (17)** adds **Text / voice** above the screenshot. Choose it, tap a place on the image, and type or use the microphone on the iPad keyboard to dictate. Review the text, choose Small/Medium/Large, and tap **Add note**. Drag the placed note to move it; tap it to edit or delete it. **Draw** returns to Pencil. Undo/redo covers both notes and strokes.
+
+Placed notes stay editable in local drafts and are included in the finished PNG when you tap Done. They survive screenshot navigation, reopening, and queue resets under **Browse → To do**. Old drawing-only drafts remain compatible. This version uses Apple's system Dictation settings; it adds no app microphone permission or paid speech provider. All 44 native simulator tests passed, and the user confirmed a dictated note plus Pencil annotations reached the Mac chat successfully. See [build 17 notes](LOCAL-BUILD-17.md).
+
+## Navigation fix from build 16
+
+Build **0.5.1 (16)** fixes the previous/next arrows after the last pending screenshot is saved. From the welcome screen, left opens the newest saved screenshot and right opens the oldest; ordinary navigation remains chronological without wrapping. All 24 native tests pass. See [local build 16 notes](LOCAL-BUILD-16.md). This is a local development build, not a TestFlight update.
+
+## Artwork and queue controls from build 15
 
 Build **0.5.1 (15)** adds the Ludwig drawing illustration, a quiet margin quotation that changes at launch or after a successful Done, and a visible **Clear queue** button beside Browse. Its confirmation resets the current session to zero without deleting files. Original screenshots and finished PNGs stay on the Mac; unfinished iPad drawings remain available in **Browse → To do**. Clearing waits for saving/loading and clipboard confirmation, and refuses to reset the Mac if the current draft cannot be saved locally.
 
 The quote information button opens the source and context: [Tractatus, Ogden/Ramsey 1922 translation](https://www.wittgensteinproject.org/w/index.php/Tractatus_Logico-Philosophicus_(English)), propositions 2.1, 2.12, and 4.1212. Artwork is bundled locally from the approved Ludwig illustration. It stays outside the drawing canvas.
 
-This local build is separate from **0.5.1 (14)**, which is already submitted to Beta App Review. See [local build notes](LOCAL-BUILD-15.md).
+Build 15 was a local development build separate from **0.5.1 (14)**, which is now approved for Public Beta. Its artwork, quotes, and Clear queue are retained in build 17. See [historical build 15 notes](LOCAL-BUILD-15.md).
 
 ## Sessions and storage
 

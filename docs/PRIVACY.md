@@ -9,7 +9,7 @@ The Mac companion reads screenshots from a local folder and transfers selected i
 ## Stored on your devices
 
 - **Mac:** originals and annotated images are in Documents/Screenshot Tool. Pairing keys, completion receipts, capture identifiers, session boundaries, and screenshot-settings backups are in Library/Application Support/Screenshot Tool.
-- **Native iPad:** pairing credentials are stored in Keychain. Draft drawings, cached screenshots, and pending exports are in the app’s local container, excluded from backup where configured by the app. Keychain entries can persist after app removal, depending on iPadOS behavior.
+- **Native iPad:** pairing credentials are stored in Keychain. Draft drawings, text notes (in builds supporting them), cached screenshots, and pending exports are in the app’s local container, excluded from backup where configured by the app. Keychain entries can persist after app removal, depending on iPadOS behavior.
 - **Safari:** pairing cookies and local draft/queue state are stored in Safari website data.
 - **Clipboard:** the last completed image and its local file URL are copied on the Mac. System clipboard features and other apps may read or synchronize this content under your device settings.
 
@@ -20,6 +20,10 @@ Files are not automatically deleted from the Mac. Starting a new session resets 
 The Mac and iPad communicate over **unencrypted local HTTP**, authenticated by a pairing key. Use a trusted private network. Authentication is not transport encryption: a party able to observe local traffic may see images or credentials. Do not expose or port-forward the service to the Internet. A QR code/pairing link grants access to the local screenshot library; keep it private.
 
 Camera access is used to scan the Mac’s pairing QR code. Local Network access connects to the Mac. The app does not record or upload camera footage. The Mac may request Documents access to read and save screenshots.
+
+## Optional keyboard Dictation
+
+Native iPad build 0.5.1 (17) adds a standard text editor for screenshot notes. You can type or choose Apple's Dictation microphone on the keyboard. Ludwig does not start a recorder, retain raw audio, or send audio to a transcription provider. The app receives the resulting text, saves placed notes with the local screenshot draft, and includes them in the finished PNG. Apple's Dictation processing, availability, and privacy settings apply; this feature does not promise that every language or device works offline. See [Apple's iPad Dictation guide](https://support.apple.com/guide/ipad/dictate-text-ipad997d9642/ipados).
 
 ## Third parties
 

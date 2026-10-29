@@ -15,11 +15,12 @@ Start at the [website](https://screenshot.bombadillo-ai.com) for the workflow, M
 | Component | Current status |
 | --- | --- |
 | Mac 0.5.1 (14) | Published as [`v0.5.1-beta.1`](https://github.com/MCALLERS/ludwigs-annotated-screenshots/releases/tag/v0.5.1-beta.1); freshly downloaded package verified. |
-| Native iPad 0.4.0 (11) | Approved public TestFlight build, still showing the earlier Fatty Lumpkin branding. |
-| Native iPad 0.5.1 (14) | Renamed build assigned to Public Beta; **Waiting for Review**. |
-| Native iPad 0.5.1 (15) | Current repository source and local device build, including Ludwig artwork, quotes, and Clear queue; not uploaded to TestFlight. |
+| Native iPad 0.5.1 (14) | **Approved** in the existing Public Beta TestFlight group; includes the new name and icon. Verified 28 October 2026. |
+| Native iPad 0.5.1 (17) | Tested locally with editable text notes and keyboard Dictation, plus build 16's navigation fix and earlier artwork, quotes, and Clear queue. Uploaded successfully to App Store Connect and processing. Public Beta assignment and beta review are not yet complete; tester availability is not confirmed. |
 
-The public Mac asset is `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`. The website is the front door configured for Mac 0.5.1; verification of its latest deployment is separate from the verified GitHub download. See [sharing the beta](docs/SHARING-BETA.md) and the [upgrade note](docs/GETTING-STARTED.md#updating-from-fatty-lumpkin).
+TestFlight approval is separate from a public App Store release. The full App Store version **1.0** remains **Prepare for Submission**. The earlier iPad **0.5.0 (13)** build is also approved; update to the latest build offered in TestFlight.
+
+The public Mac asset is `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`. The website and renamed download were verified on 28 October 2026. Build 17's text notes use the existing PNG transfer, so no new Mac download is required for that feature. See the [upgrade note](docs/GETTING-STARTED.md#updating-from-fatty-lumpkin).
 
 ## The everyday loop
 
@@ -28,7 +29,7 @@ The public Mac asset is `Ludwigs-Annotated-Screenshots-0.5.1-arm64.dmg`. The web
 3. On iPad, annotate with Apple Pencil. Tap **Done** or **Done & Next**.
 4. Wait for the confirmation that it was copied on your Mac, then press **⌘V** in Codex, Claude Code, or another app that accepts images.
 
-Capture several screenshots and annotate them in order. Use **Session** on iPad to reset the count for a new task, then optionally move previous-session screenshots to the Mac’s Trash after reviewing the file count. Both apps need version 0.5.0 or later for session controls; the currently approved native iPad 0.4.0 build does not include them. Originals stay intact until you choose cleanup. Finished PNGs collect in **Documents → Screenshot Tool → Ready**. Press **⌃⌥⌘S** on your Mac to open that folder from any app while the companion is running.
+Capture several screenshots and annotate them in order. Use **Session** on iPad to reset the count for a new task, then optionally move previous-session screenshots to the Mac’s Trash after reviewing the file count. Both apps need version 0.5.0 or later for session controls; approved iPad build 14 includes them. Originals stay intact until you choose cleanup. Finished PNGs collect in **Documents → Screenshot Tool → Ready**. Press **⌃⌥⌘S** on your Mac to open that folder from any app while the companion is running.
 
 The native app uses PencilKit for Pencil strokes, undo/redo, pan and zoom, and local draft recovery. The Safari version remains included as an alternative. Pairing is remembered; both devices must remain on the same trusted local network. A changed Mac IP address requires reopening the Mac companion and scanning its new QR code.
 
@@ -44,10 +45,11 @@ There is no app account, analytics SDK, cloud relay, or AI service integration. 
 
 - [Build from source](docs/BUILDING.md)
 - [Architecture and protocol](docs/ARCHITECTURE.md)
+- [Product backlog](docs/BACKLOG.md)
 - [Release procedure](docs/RELEASING.md)
 - [Agent workflow skill](skills/screenshot-feedback/SKILL.md)
 - [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
-The repository includes native iPad source for local build 15, beyond the separate build 14 archive submitted to Apple. See [local build 15 notes](NativeiPad/LOCAL-BUILD-15.md); publishing this source does not publish that iPad build to TestFlight.
+The working source includes native iPad build 17, beyond the approved build 14 archive. See [build 17 notes](NativeiPad/LOCAL-BUILD-17.md) for the text/voice workflow and validation; publishing this source does not publish that iPad build to TestFlight.
 
 The code is available under the [MIT license](LICENSE). The screenshot-and-pencil icon is an original vector mark; see [brand assets and provenance](Branding/ART-DIRECTION.md). This is an independent project, with no affiliation with Apple, OpenAI, Anthropic, or any fantasy franchise.

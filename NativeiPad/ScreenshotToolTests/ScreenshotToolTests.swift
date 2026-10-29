@@ -60,6 +60,69 @@ final class ScreenshotToolTests: XCTestCase {
         model.browse()
         XCTAssertEqual(model.browser?.captures.map(\.id), [first.id, second.id, new.id])
     }
+    @MainActor func testArrowsOpenSavedScreenshotsFromAnUnselectedWorkspace() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let first = capture("a", time: 1, saved: true), middle = capture("b", time: 2, saved: true), last = capture("c", time: 3, saved: true)
+        let png = samplePNG(); var mutations = 0
+        NativeTestProtocol.reply = { request in
+            if request.httpMethod != "GET" { mutations += 1 }
+            return request.url!.path == "/api/library" ? (200, try self.libraryData([middle, last, first])) : (200, png)
+        }
+        await model.poll()
+        XCTAssertNil(model.current); XCTAssertEqual(model.navigationPosition, "3 screenshots")
+        let oldest = try XCTUnwrap(model.followingCapture, "Next must open the oldest screenshot when none is selected")
+        let newest = try XCTUnwrap(model.previousCapture, "Previous must reopen the newest saved screenshot")
+        XCTAssertEqual(oldest.id, first.id); XCTAssertEqual(newest.id, last.id)
+        let openedNewest = await model.open(newest)
+        XCTAssertTrue(openedNewest); XCTAssertEqual(model.navigationPosition, "3 of 3")
+        XCTAssertEqual(model.previousCapture?.id, middle.id); XCTAssertNil(model.followingCapture)
+        let openedOldest = await model.open(oldest)
+        XCTAssertTrue(openedOldest); XCTAssertEqual(model.navigationPosition, "1 of 3")
+        XCTAssertNil(model.previousCapture); XCTAssertEqual(model.followingCapture?.id, middle.id)
+        XCTAssertEqual(mutations, 0, "Browsing saved images must not export, reset, or delete anything")
+    }
+    @MainActor func testArrowsRemainUsefulAfterFinishingTheLastScreenshot() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let first = capture("a", time: 1, saved: true), last = capture("b", time: 2), png = samplePNG()
+        var receiptID = "", saves = 0
+        NativeTestProtocol.reply = { request in
+            switch request.url!.path {
+            case "/api/library": return (200, try self.libraryData([last, first]))
+            case "/api/save":
+                saves += 1; receiptID = try XCTUnwrap(request.value(forHTTPHeaderField: "X-Submission-ID"))
+                return (200, try JSONSerialization.data(withJSONObject: ["id": receiptID, "filename": "finished.png"]))
+            case "/api/status": return (200, try JSONSerialization.data(withJSONObject: ["lastCopied": receiptID]))
+            default: return (200, png)
+            }
+        }
+        await model.poll(); XCTAssertEqual(model.current?.id, last.id)
+        await model.finish(); await model.poll()
+        XCTAssertNil(model.current); XCTAssertNotNil(model.completedMessage)
+        XCTAssertEqual(model.navigationPosition, "2 screenshots")
+        XCTAssertEqual(model.followingCapture?.id, first.id)
+        let previous = try XCTUnwrap(model.previousCapture)
+        XCTAssertEqual(previous.id, last.id)
+        let reopened = await model.open(previous)
+        XCTAssertTrue(reopened); XCTAssertEqual(model.current?.id, last.id)
+        XCTAssertNil(model.completedMessage); XCTAssertEqual(model.navigationPosition, "2 of 2")
+        await model.poll()
+        XCTAssertEqual(model.current?.id, last.id); XCTAssertEqual(saves, 1)
+    }
+    @MainActor func testEmptyAndSingleScreenshotArrowBoundaries() async throws {
+        let (model, root) = try navigationFixture()
+        defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
+        let only = capture("a", time: 1, saved: true), png = samplePNG()
+        var list: [Capture] = []
+        NativeTestProtocol.reply = { request in request.url!.path == "/api/library" ? (200, try self.libraryData(list)) : (200, png) }
+        await model.poll()
+        XCTAssertNil(model.previousCapture); XCTAssertNil(model.followingCapture)
+        list = [only]; await model.poll()
+        XCTAssertEqual(model.previousCapture?.id, only.id); XCTAssertEqual(model.followingCapture?.id, only.id)
+        let opened = await model.open(only); XCTAssertTrue(opened)
+        XCTAssertNil(model.previousCapture); XCTAssertNil(model.followingCapture)
+    }
     @MainActor func testPreviousNextPreserveInkAndManualSelectionAcrossRefreshes() async throws {
         let (model, root) = try navigationFixture()
         defer { NativeTestProtocol.reply = nil; try? FileManager.default.removeItem(at: root) }
